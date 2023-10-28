@@ -1,0 +1,29 @@
+{
+  "name": "cartesi-client",
+  "version": "0.1",
+  "description": "A typescript package that abstracts the complexity of the interaction with a Cartesi Rollups DApp.",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "scripts": {
+    "build": "npm run codegen:graphql && tsc",
+    "clean": "rm -r dist",
+    "codegen:graphql": "npx graphql-code-generator",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Arthur Vianna",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@graphql-codegen/cli": "^5.0.0",
+    "@graphql-codegen/typescript-operations": "^4.0.1",
+    "@graphql-codegen/typescript-urql": "^4.0.0"
+  },
+  "dependencies": {
+    "@cartesi/rollups": "^1.1.0",
+    "@urql/core": "^4.1.4",
+    "@urql/exchange-retry": "^1.2.0",
+    "urql": "^4.0.5"
+  }
+}

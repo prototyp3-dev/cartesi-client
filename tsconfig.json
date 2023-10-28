@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+      "module": "commonjs",
+      "target": "es2019",
+      "declaration": true,  // true to generate declaration files
+      "outDir": "./dist",   // compiled files folder
+      "paths": {
+        "@/*": ["./src/*"]
+      }
+    },
+    "include": [
+      "src/**/*",    // source code
+    ],
+  }
