@@ -23,7 +23,7 @@ ether_portal = json.load(open(f'./deployments/{network}/EtherPortal.json'))
 erc20_portal = json.load(open(f'./deployments/{network}/ERC20Portal.json'))
 erc721_portal = json.load(open(f'./deployments/{network}/ERC721Portal.json'))
 
-rollup_address = None
+rollup_address = "0x70ac08179605AF2D9e75782b8DEcDD3c22aA4D0C"
 
 def hex2str(hex):
     return bytes.fromhex(hex[2:]).decode("utf-8")

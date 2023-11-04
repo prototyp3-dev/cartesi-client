@@ -11,14 +11,18 @@
     "build": "npm run codegen:graphql && tsc",
     "clean": "rm -r dist",
     "codegen:graphql": "npx graphql-code-generator",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "jest"
   },
   "author": "Arthur Vianna",
   "license": "Apache-2.0",
   "devDependencies": {
+    "@ethersproject/providers": "^5.7.1",
     "@graphql-codegen/cli": "^5.0.0",
     "@graphql-codegen/typescript-operations": "^4.0.1",
-    "@graphql-codegen/typescript-urql": "^4.0.0"
+    "@graphql-codegen/typescript-urql": "^4.0.0",
+    "@types/jest": "^29.5.7",
+    "ethers": "^5.7.2",
+    "ts-jest": "^29.1.1"
   },
   "dependencies": {
     "@cartesi/rollups": "^1.1.0",

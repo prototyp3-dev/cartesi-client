@@ -21,7 +21,7 @@ export const getInputResult = async (
 ): Promise<{notices: Array<Notice>, reports: Array<Report>, vouchers: Array<Voucher>}> => {
     let result = {notices: [] as Array<Notice>, reports: [] as Array<Report>, vouchers: [] as Array<Voucher>}
 
-    while (result.notices.length == 0 && result.reports.length == 0) {
+    while (result.notices.length == 0 && result.reports.length == 0 && result.vouchers.length == 0) {
         // create GraphQL client to reader server
         const client = createClient({ url, exchanges: [retryExchange({
             initialDelayMs: 2000, // 2 seconds
@@ -54,7 +54,7 @@ export const getInputResult = async (
             }
 
             // add vouchers to the result
-            for (let i = 0; i < data.input.reports.edges.length; i++) {
+            for (let i = 0; i < data.input.vouchers.edges.length; i++) {
                 result.reports.push(data.input.vouchers.edges[i].node);
             }
         } else {

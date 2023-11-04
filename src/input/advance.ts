@@ -25,9 +25,16 @@ interface ERC721DepositOptions extends AdvanceOptions {
     erc721PortalAddress?: string
 }
 
+interface AdvanceOutput {
+    notices: Array<Notice>,
+    reports: Array<Report>,
+    vouchers: Array<Voucher>
+}
+
 const DEFAULT_SYNC_BEHAVIOR = true;
 
 function setDefaultAdvanceValues(options:AdvanceOptions):AdvanceOptions {
+    if (options === undefined) options = {}
     if (options.sync === undefined) {
         options.sync = DEFAULT_SYNC_BEHAVIOR;
     }
@@ -48,7 +55,7 @@ export async function advanceInput(
     client:Signer,
     dappAddress:string,
     payload:string,
-):Promise<{notices: Array<Notice>, reports: Array<Report>, vouchers: Array<Voucher>}>;
+):Promise<AdvanceOutput>;
 
 /**
  * Queries a GraphQL server for notices based on an input index
@@ -63,14 +70,14 @@ export async function advanceInput(
     dappAddress:string,
     payload:string,
     options:AdvanceInputOptions
-):Promise<{notices: Array<Notice>, reports: Array<Report>}|ContractReceipt>;
+):Promise<AdvanceOutput|ContractReceipt>;
 
 export async function advanceInput(
     client:Signer,
     dappAddress:string,
     payload:string,
     options?:AdvanceInputOptions
-):Promise<{notices: Array<Notice>, reports: Array<Report>}|ContractReceipt> {
+):Promise<AdvanceOutput|ContractReceipt> {
     options = setDefaultAdvanceValues(options);
     if (options.inputBoxAddress === undefined) {
         options.inputBoxAddress = DEFAULT_INPUT_BOX_ADDRESS;
@@ -90,7 +97,7 @@ export async function advanceInput(
     if (!options.sync) return receipt;
 
     // call is sync, fetch input processing result (reports, notices, and vouchers)
-    const inputIndex = receipt.events[0].args[1]._hex;
+    const inputIndex = Number(receipt.events[0].args[1]._hex);
     return await getInputResult(
         `${options.cartesiNodeUrl}/graphql`,
         inputIndex
@@ -113,7 +120,7 @@ export async function advanceERC20Deposit(
     dappAddress:string,
     tokenAddress:string,
     amount:number
-):Promise<{notices: Array<Notice>, reports: Array<Report>, vouchers: Array<Voucher>}>;
+):Promise<AdvanceOutput>;
 
 /**
  * Queries a GraphQL server for notices based on an input index
@@ -128,13 +135,13 @@ export async function advanceERC20Deposit(
     client:Signer, dappAddress:string,
     tokenAddress:string, amount:number,
     options:ERC20DepositOptions
-):Promise<{notices: Array<Notice>, reports: Array<Report>}|ContractReceipt>;
+):Promise<AdvanceOutput|ContractReceipt>;
 
 export async function advanceERC20Deposit(
     client:Signer, dappAddress:string,
     tokenAddress:string, amount:number,
     options?:ERC20DepositOptions
-):Promise<{notices: Array<Notice>, reports: Array<Report>}|ContractReceipt> {
+):Promise<AdvanceOutput|ContractReceipt> {
     options = setDefaultAdvanceValues(options);
     if (options.erc20PortalAddress === undefined) {
         options.erc20PortalAddress = DEFAULT_ERC20PORTAL_ADDRESS;
@@ -173,7 +180,7 @@ export async function advanceERC20Deposit(
     if (!options.sync) return receipt;
 
     // call is sync, fetch input processing result (reports, notices, and vouchers)
-    const inputIndex = receipt.events[0].args[1]._hex;
+    const inputIndex = Number(receipt.events[0].args[1]._hex);
     return await getInputResult(
         `${options.cartesiNodeUrl}/graphql`,
         inputIndex
@@ -196,7 +203,7 @@ export async function advanceERC721Deposit(
     dappAddress:string,
     tokenAddress:string,
     tokenId:number
-):Promise<{notices: Array<Notice>, reports: Array<Report>, vouchers: Array<Voucher>}>;
+):Promise<AdvanceOutput>;
 
 /**
  * Queries a GraphQL server for notices based on an input index
@@ -211,13 +218,13 @@ export async function advanceERC721Deposit(
     client:Signer, dappAddress:string,
     tokenAddress:string, tokenId:number,
     options:ERC721DepositOptions
-):Promise<{notices: Array<Notice>, reports: Array<Report>}|ContractReceipt>;
+):Promise<AdvanceOutput|ContractReceipt>;
 
 export async function advanceERC721Deposit(
     client:Signer, dappAddress:string,
     tokenAddress:string, tokenId:number,
     options?:ERC721DepositOptions
-):Promise<{notices: Array<Notice>, reports: Array<Report>}|ContractReceipt> {
+):Promise<AdvanceOutput|ContractReceipt> {
     options = setDefaultAdvanceValues(options);
     if (options.erc721PortalAddress === undefined) {
         options.erc721PortalAddress = DEFAULT_ERC721PORTAL_ADDRESS;
@@ -245,7 +252,7 @@ export async function advanceERC721Deposit(
     if (!options.sync) return receipt;
 
     // call is sync, fetch input processing result (reports, notices, and vouchers)
-    const inputIndex = receipt.events[0].args[1]._hex;
+    const inputIndex = Number(receipt.events[0].args[1]._hex);
     return await getInputResult(
         `${options.cartesiNodeUrl}/graphql`,
         inputIndex
