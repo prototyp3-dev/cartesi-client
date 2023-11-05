@@ -55,7 +55,7 @@ export const getInputResult = async (
 
             // add vouchers to the result
             for (let i = 0; i < data.input.vouchers.edges.length; i++) {
-                result.reports.push(data.input.vouchers.edges[i].node);
+                result.vouchers.push(data.input.vouchers.edges[i].node);
             }
         } else {
             throw new Error(error?.message);

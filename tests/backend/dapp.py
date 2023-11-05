@@ -51,7 +51,7 @@ def handle_ether_deposit(data):
         requests.post(f"{rollup_server}/report", json={"payload": str2hex(error_msg)})
 
         return "reject"
-    depositor = decoded[0]
+    depositor = decoded[0].lower()
     amount = decoded[1]
 
     # notice
@@ -80,8 +80,8 @@ def handle_erc20_deposit(data):
         return "reject"
 
     success = decoded[0]
-    erc20 = decoded[1]
-    depositor = decoded[2]
+    erc20 = decoded[1].lower()
+    depositor = decoded[2].lower()
     amount = decoded[3]
 
     # notice
@@ -109,8 +109,8 @@ def handle_erc721_deposit(data):
 
         return "reject"
 
-    erc721 = decoded[0]
-    depositor = decoded[1]
+    erc721 = decoded[0].lower()
+    depositor = decoded[1].lower()
     tokenId = decoded[2]
 
     # notice

@@ -1,8 +1,10 @@
 import { advanceInput } from "../src/index";
-import { JsonRpcProvider } from "@ethersproject/providers";
+import { JsonRpcProvider, TransactionReceipt } from "@ethersproject/providers";
 import { ethers, ContractReceipt } from "ethers";
 
 import { Notice, Report, Voucher } from "../src/generated/graphql";
+import { InputBox__factory } from "@cartesi/rollups";
+import { DEFAULT_INPUT_BOX_ADDRESS } from "../src/shared/default";
 
 interface Payload {
   payload: string
@@ -33,13 +35,15 @@ let output:OutputTest|ContractReceipt;
 
 
 function expectedAsyncInput(input:InputTest, output:OutputTest) {
-  for (let i = 0; i < output.notices?.length; i++) {
+  if (input.notices && input.notices.length > 0) expect(input.notices.length).toBe(output.notices.length);
+  for (let i = 0; i < output.notices.length; i++) {
     expect(output.notices[i].payload).toBe(
       ethers.utils.hexlify(ethers.utils.toUtf8Bytes(input.notices![i].payload))
     );  
   }  
 
-  for (let i = 0; i < output.reports?.length; i++) {
+  if (input.reports && input.reports.length > 0) expect(input.reports.length).toBe(output.reports.length);
+  for (let i = 0; i < output.reports.length; i++) {
     expect(output.reports[i].payload).toBe(
       ethers.utils.hexlify(ethers.utils.toUtf8Bytes(input.reports![i].payload))
     );  
@@ -102,4 +106,34 @@ test('Two notices and two reports', async () => {
   output = await advanceInput(signer, dapp_address, JSON.stringify(input));
 
   expectedAsyncInput(input, output);
+}, test_timeout);
+
+
+// TEST 5
+input = {
+  "notices": [{"payload": "Notice 0"}],
+}
+test('Sync advanceInput', async () => {
+  output = await advanceInput(signer, dapp_address, JSON.stringify(input), {sync: false});
+  const inputContract = InputBox__factory.connect(
+    DEFAULT_INPUT_BOX_ADDRESS,
+    provider
+  );
+
+  // Validate Receipt using events
+  const events = await inputContract.queryFilter(
+    inputContract.filters.InputAdded(),
+    (output as TransactionReceipt).blockHash
+  );
+
+  const received_event = (output as ContractReceipt).events![0];
+  const expected_event = events[0];
+
+  expect(received_event.eventSignature).toBe(expected_event.eventSignature);
+  expect(received_event.args).toEqual(expected_event.args);
+  expect(received_event.address).toBe(expected_event.address);
+  expect(received_event.transactionHash).toBe(expected_event.transactionHash);
+  expect(received_event.blockNumber).toBe(expected_event.blockNumber);
+  expect(received_event.blockHash).toBe(expected_event.blockHash);
+  expect(received_event.data).toBe(expected_event.data);
 }, test_timeout);

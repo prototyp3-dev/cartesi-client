@@ -49,7 +49,7 @@ function setDefaultAdvanceValues(options:AdvanceOptions):AdvanceOptions {
  * @param client signer
  * @param dappAddress Cartesi Rollup DApp contract address
  * @param payload payload to send
- * @returns Object with a list of notices and reports for an input
+ * @returns Object with a list of notices, reports, and vouchers for an input
  */
 export async function advanceInput(
     client:Signer,
@@ -63,7 +63,7 @@ export async function advanceInput(
  * @param dappAddress Cartesi Rollup DApp contract address
  * @param payload payload to send
  * @param options options that have default values
- * @returns Object with a list of notices and reports for an input or addInput's receipt
+ * @returns Object with a list of notices, reports, and vouchers an input, or addInput's receipt
  */
 export async function advanceInput(
     client:Signer,
@@ -180,7 +180,7 @@ export async function advanceERC20Deposit(
     if (!options.sync) return receipt;
 
     // call is sync, fetch input processing result (reports, notices, and vouchers)
-    const inputIndex = Number(receipt.events[0].args[1]._hex);
+    const inputIndex = Number(receipt.events[2].topics[2]);
     return await getInputResult(
         `${options.cartesiNodeUrl}/graphql`,
         inputIndex
@@ -240,7 +240,8 @@ export async function advanceERC721Deposit(
         tokenAddress,
         client
     );
-    erc721Contract.approve(options.erc721PortalAddress, tokenId);
+    const approve_receipt = await erc721Contract.approve(options.erc721PortalAddress, tokenId);
+    await approve_receipt.wait();
 
     // deposit
     const deposit = await erc721Portal.depositERC721Token(
@@ -252,7 +253,7 @@ export async function advanceERC721Deposit(
     if (!options.sync) return receipt;
 
     // call is sync, fetch input processing result (reports, notices, and vouchers)
-    const inputIndex = Number(receipt.events[0].args[1]._hex);
+    const inputIndex = Number(receipt.events[2].topics[2]);
     return await getInputResult(
         `${options.cartesiNodeUrl}/graphql`,
         inputIndex
