@@ -253,7 +253,7 @@ export async function advanceERC721Deposit(
     if (!options.sync) return receipt;
 
     // call is sync, fetch input processing result (reports, notices, and vouchers)
-    const inputIndex = Number(receipt.events[2].topics[2]);
+    const inputIndex = Number(receipt.events[1].topics[2]);
     return await getInputResult(
         `${options.cartesiNodeUrl}/graphql`,
         inputIndex

@@ -1,10 +1,13 @@
 import { advanceInput } from "../src/index";
-import { JsonRpcProvider, TransactionReceipt } from "@ethersproject/providers";
+import { TransactionReceipt } from "@ethersproject/providers";
 import { ethers, ContractReceipt } from "ethers";
 
 import { Notice, Report, Voucher } from "../src/generated/graphql";
 import { InputBox__factory } from "@cartesi/rollups";
 import { DEFAULT_INPUT_BOX_ADDRESS } from "../src/shared/default";
+import { provider, dappAddress, testTimeout } from "./conf";
+//import { NonceManager } from "@ethersproject/experimental";
+
 
 interface Payload {
   payload: string
@@ -21,15 +24,13 @@ interface OutputTest {
   vouchers: Array<Voucher>
 }
 
-const provider = new JsonRpcProvider("http://localhost:8545");
-const signer = ethers.Wallet
-.fromMnemonic("test test test test test test test test test test test junk")
-.connect(provider);
-const dapp_address = "0x70ac08179605AF2D9e75782b8DEcDD3c22aA4D0C";
-const test_timeout = 60000
-
 let input:InputTest;
 let output:OutputTest|ContractReceipt;
+const signer = ethers.Wallet
+    .fromMnemonic("test test test test test test test test test test test junk",
+    `m/44'/60'/0'/0/1`)
+    .connect(provider);
+//const signer = new NonceManager(my_signer);
 
 
 
@@ -56,10 +57,10 @@ input = {
 }
 
 test('Single notice', async () => {
-  output = await advanceInput(signer, dapp_address, JSON.stringify(input));
+  output = await advanceInput(signer, dappAddress, JSON.stringify(input));
   
   expectedAsyncInput(input, output);
-}, test_timeout);
+}, testTimeout);
 
 
 // TEST 1
@@ -67,10 +68,10 @@ input = {
   "notices": [{"payload": "Notice 0"}, {"payload": "Notice 1"}]
 }
 test('Two notices', async () => {
-  output = await advanceInput(signer, dapp_address, JSON.stringify(input));
+  output = await advanceInput(signer, dappAddress, JSON.stringify(input));
 
   expectedAsyncInput(input, output);
-}, test_timeout);
+}, testTimeout);
 
 
 // TEST 2
@@ -79,10 +80,10 @@ input = {
   "reports": [{"payload": "Report 0"}]
 }
 test('One notice and one report', async () => {
-  output = await advanceInput(signer, dapp_address, JSON.stringify(input));
+  output = await advanceInput(signer, dappAddress, JSON.stringify(input));
 
   expectedAsyncInput(input, output);
-}, test_timeout);
+}, testTimeout);
 
 
 // TEST 3
@@ -91,10 +92,10 @@ input = {
   "reports": [{"payload": "Report 0"}]
 }
 test('Two notices and one report', async () => {
-  output = await advanceInput(signer, dapp_address, JSON.stringify(input));
+  output = await advanceInput(signer, dappAddress, JSON.stringify(input));
 
   expectedAsyncInput(input, output);
-}, test_timeout);
+}, testTimeout);
 
 
 // TEST 4
@@ -103,10 +104,10 @@ input = {
   "reports": [{"payload": "Report 0"}, {"payload": "Report 1"}]
 }
 test('Two notices and two reports', async () => {
-  output = await advanceInput(signer, dapp_address, JSON.stringify(input));
+  output = await advanceInput(signer, dappAddress, JSON.stringify(input));
 
   expectedAsyncInput(input, output);
-}, test_timeout);
+}, testTimeout);
 
 
 // TEST 5
@@ -114,7 +115,7 @@ input = {
   "notices": [{"payload": "Notice 0"}],
 }
 test('Sync advanceInput', async () => {
-  output = await advanceInput(signer, dapp_address, JSON.stringify(input), {sync: false});
+  output = await advanceInput(signer, dappAddress, JSON.stringify(input), {sync: false});
   const inputContract = InputBox__factory.connect(
     DEFAULT_INPUT_BOX_ADDRESS,
     provider
@@ -136,4 +137,4 @@ test('Sync advanceInput', async () => {
   expect(received_event.blockNumber).toBe(expected_event.blockNumber);
   expect(received_event.blockHash).toBe(expected_event.blockHash);
   expect(received_event.data).toBe(expected_event.data);
-}, test_timeout);
+}, testTimeout);

@@ -102,9 +102,9 @@ def handle_erc20_deposit(data):
 def handle_erc721_deposit(data):
     binary = bytes.fromhex(data["payload"][2:])
     try:
-        decoded = decode_packed(['address', 'address', 'uint256', 'bytes'], binary)
+        decoded = decode_packed(['address', 'address', 'uint256'], binary)
     except Exception as e:
-        error_msg = f"Payload does not conform to ERC20 deposit ABI\n{e}"
+        error_msg = f"Payload does not conform to ERC721 deposit ABI\n{e}"
         requests.post(f"{rollup_server}/report", json={"payload": str2hex(error_msg)})
 
         return "reject"
