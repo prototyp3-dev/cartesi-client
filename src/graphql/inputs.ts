@@ -24,7 +24,7 @@ export const getInputResult = async (
     while (result.notices.length == 0 && result.reports.length == 0 && result.vouchers.length == 0) {
         // create GraphQL client to reader server
         const client = createClient({ url, exchanges: [retryExchange({
-            initialDelayMs: 2000, // 2 seconds
+            initialDelayMs: 3000, // 3 seconds
             maxNumberAttempts: Number.POSITIVE_INFINITY,
             retryIf: error => { // retry if has a graphql error (ex: notice not found for this inputIndex)
                 console.log("Checking error then retrying...")
