@@ -8,7 +8,7 @@
     "/dist"
   ],
   "scripts": {
-    "build": "npm run codegen:graphql && tsc",
+    "build": "npm run codegen:graphql && tsc && tsc-alias",
     "clean": "rm -r dist",
     "codegen:graphql": "npx graphql-code-generator",
     "test": "jest"
@@ -22,7 +22,8 @@
     "@graphql-codegen/typescript-urql": "^4.0.0",
     "@types/jest": "^29.5.7",
     "ethers": "^5.7.2",
-    "ts-jest": "^29.1.1"
+    "ts-jest": "^29.1.1",
+    "tsc-alias": "^1.8.8"
   },
   "dependencies": {
     "@cartesi/rollups": "^1.1.0",
