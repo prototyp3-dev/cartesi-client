@@ -69,21 +69,8 @@ export async function executeVoucher(
         throw Error(`voucher "${voucher.index}" from input "${voucher.input}" has no associated proof yet`);
     }
 
-    const proof:ProofStruct = {
-        context: voucher.proof.context,
-        validity: {
-            inputIndexWithinEpoch: voucher.proof.validity.inputIndex,
-            machineStateHash: voucher.proof.validity.machineStateHash,
-            noticesEpochRootHash: voucher.proof.validity.noticesEpochRootHash,
-            outputHashesInEpochSiblings: voucher.proof.validity.outputHashesInEpochSiblings,
-            outputHashesRootHash: voucher.proof.validity.outputHashesRootHash,
-            outputHashInOutputHashesSiblings: voucher.proof.validity.keccakInHashesSiblings,
-            outputIndexWithinInput: voucher.proof.validity.outputIndex,
-            vouchersEpochRootHash: voucher.proof.validity.vouchersEpochRootHash
-        }
-    }
     const voucher_execution = await dappContract.executeVoucher(
-        voucher.destination, voucher.payload,proof);
+        voucher.destination, voucher.payload, voucher.proof);
 
     const receipt = voucher_execution.wait();
     return receipt;
