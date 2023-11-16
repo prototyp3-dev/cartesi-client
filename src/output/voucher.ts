@@ -1,13 +1,13 @@
 import { Voucher } from "@/generated/graphql";
 import { PartialVoucher, getVoucher, getVouchers } from "../graphql/vouchers";
 import { CartesiDApp__factory } from "@cartesi/rollups";
-import { ProofStruct } from "@cartesi/rollups/dist/src/types/contracts/dapp/CartesiDApp";
 import { Signer, ContractReceipt } from "ethers";
+import { Provider } from "@ethersproject/providers";
 import { DEFAULT_CARTESI_NODE_URL } from "@/shared/default";
 
 
 export async function getUnexecutedVouchers(
-    signer:Signer, dappAddress:string, cartesiNodeUrl?:string
+    signerOrProvider:Signer|Provider, dappAddress:string, cartesiNodeUrl?:string
 ):Promise<PartialVoucher[]> {
     if (cartesiNodeUrl === undefined) {
         cartesiNodeUrl = DEFAULT_CARTESI_NODE_URL;
@@ -15,7 +15,7 @@ export async function getUnexecutedVouchers(
     const voucher_list = await getVouchers(`${cartesiNodeUrl}/graphql`);
     let result:PartialVoucher[] = [];
 
-    const dappContract = CartesiDApp__factory.connect(dappAddress, signer);
+    const dappContract = CartesiDApp__factory.connect(dappAddress, signerOrProvider);
 
     for (let i = 0; i < voucher_list.length; i++) {
         const voucher = voucher_list[i];
@@ -28,20 +28,20 @@ export async function getUnexecutedVouchers(
 }
 
 export async function getVouchersReady(
-    signer:Signer, dappAddress:string, cartesiNodeUrl?:string
+    signerOrProvider:Signer|Provider, dappAddress:string, cartesiNodeUrl?:string
 ):Promise<Voucher[]> {
     if (cartesiNodeUrl === undefined) {
         cartesiNodeUrl = DEFAULT_CARTESI_NODE_URL;
     }
     let unexecuted_vouchers:PartialVoucher[] = await getUnexecutedVouchers(
-        signer, dappAddress, cartesiNodeUrl
+        signerOrProvider, dappAddress, cartesiNodeUrl
     );
 
     let ready_vouchers:Voucher[] = [];
     for (let i = 0; i < unexecuted_vouchers.length; i++) {
         const voucher = await getVoucher(
             `${cartesiNodeUrl}/graphql`,
-            unexecuted_vouchers[i].index, unexecuted_vouchers[i].index
+            unexecuted_vouchers[i].index, unexecuted_vouchers[i].input.index
         );
 
         if (!voucher.proof) continue;
