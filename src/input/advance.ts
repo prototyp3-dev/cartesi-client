@@ -4,8 +4,9 @@ import {
     DEFAULT_CARTESI_NODE_URL,
     DEFAULT_INPUT_BOX_ADDRESS,
     DEFAULT_ERC20PORTAL_ADDRESS,
-    DEFAULT_ERC721PORTAL_ADDRESS } from "@/shared/default";
-import { InputBox__factory, ERC20Portal__factory, ERC721Portal__factory, IERC20__factory, IERC721__factory } from "@cartesi/rollups";
+    DEFAULT_ERC721PORTAL_ADDRESS,
+    DEFAULT_ETHERPORTAL_ADDRESS } from "@/shared/default";
+import { InputBox__factory, ERC20Portal__factory, ERC721Portal__factory, IERC20__factory, IERC721__factory, EtherPortal__factory } from "@cartesi/rollups";
 import { Signer, utils, ContractReceipt, BigNumber } from "ethers";
 
 interface AdvanceOptions {
@@ -23,6 +24,10 @@ interface ERC20DepositOptions extends AdvanceOptions {
 
 interface ERC721DepositOptions extends AdvanceOptions {
     erc721PortalAddress?: string
+}
+
+interface ETherDepositOptions extends AdvanceOptions {
+    etherPortalAddress?: string
 }
 
 interface AdvanceOutput {
@@ -112,7 +117,6 @@ export async function advanceInput(
  * @param dappAddress Cartesi Rollup DApp contract address
  * @param tokenAddress ERC20 token address
  * @param amount amount of the ERC20 token to deposit
- * @param options options that have default values
  * @returns Object with a list of notices and reports for an input or addInput's receipt
  */
 export async function advanceERC20Deposit(
@@ -195,7 +199,6 @@ export async function advanceERC20Deposit(
  * @param dappAddress Cartesi Rollup DApp contract address
  * @param tokenAddress ERC721 token address
  * @param tokenId id of the ERC721 token to deposit
- * @param options options that have default values
  * @returns Object with a list of notices and reports for an input or addInput's receipt
  */
 export async function advanceERC721Deposit(
@@ -254,6 +257,65 @@ export async function advanceERC721Deposit(
 
     // call is sync, fetch input processing result (reports, notices, and vouchers)
     const inputIndex = Number(receipt.events[1].topics[2]);
+    return await getInputResult(
+        `${options.cartesiNodeUrl}/graphql`,
+        inputIndex
+    );
+}
+
+
+/**
+ * Queries a GraphQL server for notices based on an input index
+ * @param client signer
+ * @param dappAddress Cartesi Rollup DApp contract address
+ * @param amount amount of ETHER to deposit (in ETHER)
+ * @returns Object with a list of notices and reports for an input or addInput's receipt
+ */
+export async function advanceEtherDeposit(
+    client:Signer,
+    dappAddress:string,
+    amount:number
+):Promise<AdvanceOutput>;
+
+/**
+ * Queries a GraphQL server for notices based on an input index
+ * @param client signer
+ * @param dappAddress Cartesi Rollup DApp contract address
+ * @param tokenAddress ERC20 token address
+ * @param amount amount of ETHER to deposit (in ETHER)
+ * @param options options that have default values
+ * @returns Object with a list of notices and reports for an input or addInput's receipt
+ */
+export async function advanceEtherDeposit(
+    client:Signer, dappAddress:string,
+    amount:number, options:ETherDepositOptions
+):Promise<AdvanceOutput|ContractReceipt>;
+
+export async function advanceEtherDeposit(
+    client:Signer, dappAddress:string,
+    amount:number, options?:ETherDepositOptions
+):Promise<AdvanceOutput|ContractReceipt> {
+    options = setDefaultAdvanceValues(options);
+    if (options.etherPortalAddress === undefined) {
+        options.etherPortalAddress = DEFAULT_ETHERPORTAL_ADDRESS;
+    }
+
+    const value = utils.parseEther(amount.toString());
+    const etherPortal = EtherPortal__factory.connect(
+        options.etherPortalAddress,
+        client
+    );
+
+    // deposit
+    const deposit = await etherPortal.depositEther(
+        dappAddress, "0x", {value: value});
+    const receipt = await deposit.wait();
+
+    // call is async, return depositEther' receipt
+    if (!options.sync) return receipt;
+
+    // call is sync, fetch input processing result (reports, notices, and vouchers)
+    const inputIndex = Number(receipt.events[0].topics[2]);
     return await getInputResult(
         `${options.cartesiNodeUrl}/graphql`,
         inputIndex
