@@ -6,6 +6,6 @@ export { getVoucher, getVouchers } from "./graphql/vouchers";
 
 
 // high-level functions
-export { advanceInput, advanceERC20Deposit, advanceERC721Deposit } from "./input/advance";
+export { advanceInput, advanceERC20Deposit, advanceERC721Deposit, advanceEtherDeposit } from "./input/advance";
 export { inspect } from "./input/inspect";
 export { getUnexecutedVouchers, getVouchersReady, executeVoucher } from "./output/voucher";
