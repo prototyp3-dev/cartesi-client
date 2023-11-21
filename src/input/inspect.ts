@@ -26,6 +26,7 @@ const DEFAULT_AGGREGATE = false;
 const DEFAULT_DECODE_TO = DECODE_OPTIONS[0];
 
 function setDefaultInspectValues(options:InspectOptions):InspectOptions {
+    if (options === undefined) options = {}
     if (options.cartesiNodeUrl === undefined) {
         options.cartesiNodeUrl = DEFAULT_CARTESI_NODE_URL;
     }
@@ -38,7 +39,30 @@ function setDefaultInspectValues(options:InspectOptions):InspectOptions {
     return options;
 }
 
-export async function inspect(payload:string, options?:InspectOptions) {
+/**
+ * Sends an inspect to a Cartesi Node with input payload
+ * @param payload payload to send
+ * @returns string
+ */
+export async function inspect(
+    payload:string,
+):Promise<string>
+
+/**
+ * Sends an inspect to a Cartesi Node with input payload
+ * @param payload payload to send
+ * @param options options that have default values
+ * @returns string
+ */
+export async function inspect(
+    payload:string,
+    options:InspectOptions
+):Promise<string|Uint8Array>
+
+export async function inspect(
+    payload:string,
+    options?:InspectOptions
+):Promise<string|Uint8Array> {
     options = setDefaultInspectValues(options);
 
     let url = `${options.cartesiNodeUrl}/inspect/${payload}`;
