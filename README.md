@@ -13,9 +13,16 @@ A typescript package that abstracts the complexity of the interaction with a Car
     - [Inspect](#inspect)
         - [inspect](#inspect-1)
 - [Output Functions](#output-functions)
-    - [getUnexecutedVouchers](#getUnexecutedVouchers)
-    - [getVouchersReady](#getVouchersReady)
-    - [executeVoucher](#executeVoucher)
+    - [Reports](#reports)
+        - [getReports](#getreports)
+        - [getReport](#getreport)
+    - [Notices](#notices)
+        - [getNotices](#getnotices)
+        - [getNotice](#getnotice)
+    - [Vouchers](#vouchers)
+        - [getUnexecutedVouchers](#getunexecutedvouchers)
+        - [getVouchersReady](#getvouchersready)
+        - [executeVoucher](#executevoucher)
 
 # Build
 ```shell
@@ -44,7 +51,7 @@ Functions in this subsection trigger an advance state in the Cartesi DApp. The r
 ### advanceInput
 Sends a generic input (payload) to the Cartesi DApp.
 
-| Parameter               | required | type    | default                                    |
+| Parameter               | Required | Type    | Default                                    |
 |-------------------------|----------|---------|--------------------------------------------|
 | client                  | true     | Signer  | -                                          |
 | dappAddress             | true     | string  | -                                          |
@@ -56,7 +63,7 @@ Sends a generic input (payload) to the Cartesi DApp.
 ### advanceEtherDeposit
 Sends a deposit of **amount** ETHERs to the Cartesi DApp.
 
-| Parameter                  | required | type    | default                                    |
+| Parameter                  | Required | Type    | Default                                    |
 |----------------------------|----------|---------|--------------------------------------------|
 | client                     | true     | Signer  | -                                          |
 | dappAddress                | true     | string  | -                                          |
@@ -69,7 +76,7 @@ Sends a deposit of **amount** ETHERs to the Cartesi DApp.
 ### advanceERC20Deposit
 Sends a deposit of **amount** ERC20 tokens to the Cartesi DApp.
 
-| Parameter                  | required | type    | default                                    |
+| Parameter                  | Required | Type    | Default                                    |
 |----------------------------|----------|---------|--------------------------------------------|
 | client                     | true     | Signer  | -                                          |
 | dappAddress                | true     | string  | -                                          |
@@ -82,7 +89,7 @@ Sends a deposit of **amount** ERC20 tokens to the Cartesi DApp.
 ### advanceERC721Deposit
 Deposit the ERC721 token with address **tokenAddress** and id **tokenId** to the Cartesi DApp.
 
-| Parameter                   | required | type    | default                                    |
+| Parameter                   | Required | Type    | Default                                    |
 |-----------------------------|----------|---------|--------------------------------------------|
 | client                      | true     | Signer  | -                                          |
 | dappAddress                 | true     | string  | -                                          |
@@ -95,14 +102,101 @@ Deposit the ERC721 token with address **tokenAddress** and id **tokenId** to the
 
 ## Inspect
 ### inspect
+Sends an inspect to a Cartesi Node with input payload
+
+| Parameter              | Required | Type    | Default               |
+|------------------------|----------|---------|-----------------------|
+| payload                | true     | string  | -                     |
+| options.cartesiNodeUrl | false    | string  | http://localhost:8080 |
+| options.aggregate      | false    | boolean | false                 |
+| options.decodeTo       | false    | string  | utf-8                 |
 
 # Output Functions
 ## Vouchers
+
+### getVouchers
+Queries Cartesi Node's GraphQL server for vouchers.
+
+| Parameter  | Required | Type   | Default   |
+|------------|----------|--------|-----------|
+| url        | true     | string | -         |
+| inputIndex | false    | number | undefined |
+
+### getVoucher
+Queries Cartesi Node's GraphQL server looking for a specific voucher.
+
+| Parameter    | Required | Type   | Default |
+|--------------|----------|--------|---------|
+| url          | true     | string | -       |
+| voucherIndex | true     | number | -       |
+| inputIndex   | true     | number | -       |
+
 ### getUnexecutedVouchers
+Retrieve all vouchers not executed.
+
+| Parameter      | Required | Type             | Default               |
+|----------------|----------|------------------|-----------------------|
+| signOrProvider | true     | Signer\|Provider | -                     |
+| dappAddress    | true     | string           | -                     |
+| cartesiNodeUrl | false    | string           | http://localhost:8080 |
+
 ### getVouchersReady
+Retrieve all vouchers ready to be executed.
+
+| Parameter      | Required | Type             | Default               |
+|----------------|----------|------------------|-----------------------|
+| signOrProvider | true     | Signer\|Provider | -                     |
+| dappAddress    | true     | string           | -                     |
+| cartesiNodeUrl | false    | string           | http://localhost:8080 |
+
 ### executeVoucher
+Execute a voucher given its inputIndex and voucherIndex.
+
+| Parameter      | Required | Type   | Default               |
+|----------------|----------|--------|-----------------------|
+| signer         | true     | Signer | -                     |
+| dappAddress    | true     | string | -                     |
+| inputIndex     | true     | number | -                     |
+| voucherIndex   | true     | number | -                     |
+| cartesiNodeUrl | false    | string | http://localhost:8080 |
+
 ## Notices
+
+### getNotices
+Queries Cartesi Node's GraphQL server for notices.
+
+| Parameter  | Required | Type   | Default   |
+|------------|----------|--------|-----------|
+| url        | true     | string | -         |
+| inputIndex | false    | number | undefined |
+
+### getNotice
+Queries Cartesi Node's GraphQL server looking for a specific notice.
+
+| Parameter   | Required | Type   | Default |
+|-------------|----------|--------|---------|
+| url         | true     | string | -       |
+| inputIndex  | true     | number | -       |
+| noticeIndex | false    | number | 0       |
+
 ## Reports
+
+### getReports
+Queries Cartesi Node's GraphQL server for reports.
+
+| Parameter  | Required | Type   | Default   |
+|------------|----------|--------|-----------|
+| url        | true     | string | -         |
+| inputIndex | false    | number | undefined |
+
+### getReport
+Queries Cartesi Node's GraphQL server looking for a specific report.
+
+| Parameter   | Required | Type   | Default |
+|-------------|----------|--------|---------|
+| url         | true     | string | -       |
+| inputIndex  | true     | number | -       |
+| reportIndex | false    | number | 0       |
 
 # Run package Tests
 
