@@ -106,8 +106,8 @@ Sends an inspect to a Cartesi Node with input payload
 
 | Parameter              | Required | Type    | Default               |
 |------------------------|----------|---------|-----------------------|
+| cartesiNodeUrl         | true     | string  | -                     |
 | payload                | true     | string  | -                     |
-| options.cartesiNodeUrl | false    | string  | http://localhost:8080 |
 | options.aggregate      | false    | boolean | false                 |
 | options.decodeTo       | false    | string  | utf-8                 |
 

@@ -30,7 +30,7 @@ interface ETherDepositOptions extends AdvanceOptions {
     etherPortalAddress?: string
 }
 
-interface AdvanceOutput {
+export interface AdvanceOutput {
     notices: Array<Notice>,
     reports: Array<Report>,
     vouchers: Array<Voucher>

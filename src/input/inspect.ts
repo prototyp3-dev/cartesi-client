@@ -1,12 +1,10 @@
 import { utils } from "ethers";
-import { DEFAULT_CARTESI_NODE_URL } from "@/shared/default";
 
-const DECODE_OPTIONS = ["utf-8", "uint8Array"] as const;
+const DECODE_OPTIONS = ["no-decode", "utf-8", "uint8Array"] as const;
 type DECODE = typeof DECODE_OPTIONS;        // type x = readonly ['op1', 'op2', ...]
 type DECODE_OPTIONS_TYPE = DECODE[number];  // 'op1' | 'op2' | ...
 
 interface InspectOptions {
-    cartesiNodeUrl?: string,
     aggregate?:boolean,
     decodeTo?:DECODE_OPTIONS_TYPE
 }
@@ -27,10 +25,7 @@ const DEFAULT_DECODE_TO = DECODE_OPTIONS[0];
 
 function setDefaultInspectValues(options:InspectOptions):InspectOptions {
     if (options === undefined) options = {}
-    if (options.cartesiNodeUrl === undefined) {
-        options.cartesiNodeUrl = DEFAULT_CARTESI_NODE_URL;
-    }
-    if (options.cartesiNodeUrl === undefined) {
+    if (options.aggregate === undefined) {
         options.aggregate = DEFAULT_AGGREGATE;
     }
     if (options.decodeTo === undefined) {
@@ -41,31 +36,36 @@ function setDefaultInspectValues(options:InspectOptions):InspectOptions {
 
 /**
  * Sends an inspect to a Cartesi Node with input payload
+ * @param cartesiNodeUrl DApp's Cartesi Node URL
  * @param payload payload to send
  * @returns string
  */
 export async function inspect(
+    cartesiNodeUrl:string,
     payload:string,
 ):Promise<string>
 
 /**
  * Sends an inspect to a Cartesi Node with input payload
+ * @param cartesiNodeUrl DApp's Cartesi Node URL
  * @param payload payload to send
  * @param options options that have default values
  * @returns string
  */
 export async function inspect(
+    cartesiNodeUrl:string,
     payload:string,
     options:InspectOptions
 ):Promise<string|Uint8Array>
 
 export async function inspect(
+    cartesiNodeUrl:string,
     payload:string,
     options?:InspectOptions
 ):Promise<string|Uint8Array> {
     options = setDefaultInspectValues(options);
 
-    let url = `${options.cartesiNodeUrl}/inspect/${payload}`;
+    let url = `${cartesiNodeUrl}/inspect/${payload}`;
     let response = await fetch(url, {method: 'GET', mode: 'cors',});
 
     if (response.status != 200) {
@@ -99,8 +99,10 @@ function aggregate(inspectResponse:InspectResponse):string {
 
 function decodeTo(payload:string, decodeOption:DECODE_OPTIONS_TYPE):string|Uint8Array {
     if (decodeOption === DECODE_OPTIONS[0]) {
-        return utils.toUtf8String(payload);
+        return payload;
     } else if (decodeOption === DECODE_OPTIONS[1]) {
+        return utils.toUtf8String(payload);
+    } else if (decodeOption === DECODE_OPTIONS[2]) {
         return utils.arrayify(payload);
     }
 
