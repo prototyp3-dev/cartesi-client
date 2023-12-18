@@ -30,5 +30,19 @@
     "@urql/core": "^4.1.4",
     "@urql/exchange-retry": "^1.2.0",
     "urql": "^4.0.5"
+  },
+  "overrides": {
+    "@graphql-codegen/cli": {
+      "graphql": "~16.6.0"
+    },
+    "@graphql-codegen/typescript-operations": {
+      "graphql": "~16.6.0"
+    },
+    "@graphql-codegen/typescript-urql": {
+      "graphql": "~16.6.0"
+    },
+    "@urql/core": {
+      "graphql": "~16.6.0"
+    }
   }
 }
