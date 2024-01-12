@@ -8,6 +8,8 @@ import {
     Voucher
 } from "@/generated/graphql";
 
+import { GraphqlOptions, setDefaultGraphqlOptions, getGraphqlUrl } from "./lib"
+
 
 /**
  * Queries a GraphQL server for notices based on an input index
@@ -64,3 +66,18 @@ export const getInputResult = async (
 
     return result;
 };
+
+/**
+ * Queries a GraphQL server for notices based on an input index
+ * @param options options that have default values
+ * @returns Object with a list of notices and reports for an input
+ */
+export const queryInputResult = async (
+    options?: GraphqlOptions
+): Promise<{notices: Array<Notice>, reports: Array<Report>, vouchers: Array<Voucher>}> => {
+    if (options.outputIndex === undefined) {
+        throw new Error("input index not defined");
+    }
+    options = setDefaultGraphqlOptions(options);
+    return getInputResult(getGraphqlUrl(options),options.inputIndex);
+}

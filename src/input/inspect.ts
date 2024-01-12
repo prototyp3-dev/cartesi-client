@@ -1,12 +1,19 @@
 import { utils } from "ethers";
+import { DEFAULT_CARTESI_NODE_URL } from "@/shared/default";
 
 const DECODE_OPTIONS = ["no-decode", "utf-8", "uint8Array"] as const;
 type DECODE = typeof DECODE_OPTIONS;        // type x = readonly ['op1', 'op2', ...]
 type DECODE_OPTIONS_TYPE = DECODE[number];  // 'op1' | 'op2' | ...
 
-interface InspectOptions {
+const METHOD_OPTIONS = ["GET", "POST"] as const;
+type METHOD = typeof METHOD_OPTIONS;        // type x = readonly ['op1', 'op2', ...]
+type METHOD_OPTIONS_TYPE = METHOD[number];  // 'op1' | 'op2' | ...
+
+export interface InspectOptions {
+    cartesiNodeUrl?: string,
     aggregate?:boolean,
-    decodeTo?:DECODE_OPTIONS_TYPE
+    decodeTo?:DECODE_OPTIONS_TYPE,
+    method?:METHOD_OPTIONS_TYPE
 }
 
 interface InspectResponse {
@@ -22,14 +29,21 @@ interface InspectResponseReport {
 
 const DEFAULT_AGGREGATE = false;
 const DEFAULT_DECODE_TO = DECODE_OPTIONS[0];
+const DEFAULT_METHOD = METHOD_OPTIONS[0];
 
 function setDefaultInspectValues(options:InspectOptions):InspectOptions {
+    if (options.cartesiNodeUrl === undefined) {
+        options.cartesiNodeUrl = DEFAULT_CARTESI_NODE_URL;
+    }
     if (options === undefined) options = {}
     if (options.aggregate === undefined) {
         options.aggregate = DEFAULT_AGGREGATE;
     }
     if (options.decodeTo === undefined) {
         options.decodeTo = DEFAULT_DECODE_TO;
+    }
+    if (options.method === undefined) {
+        options.method = DEFAULT_METHOD;
     }
     return options;
 }
@@ -41,7 +55,6 @@ function setDefaultInspectValues(options:InspectOptions):InspectOptions {
  * @returns string
  */
 export async function inspect(
-    cartesiNodeUrl:string,
     payload:string,
 ):Promise<string>
 
@@ -53,20 +66,23 @@ export async function inspect(
  * @returns string
  */
 export async function inspect(
-    cartesiNodeUrl:string,
     payload:string,
     options:InspectOptions
 ):Promise<string|Uint8Array>
 
 export async function inspect(
-    cartesiNodeUrl:string,
     payload:string,
     options?:InspectOptions
 ):Promise<string|Uint8Array> {
     options = setDefaultInspectValues(options);
 
-    let url = `${cartesiNodeUrl}/inspect/${payload}`;
-    let response = await fetch(url, {method: 'GET', mode: 'cors',});
+    let url = `${options.cartesiNodeUrl}/inspect`;
+    let response: Response;
+    if (options.method == "GET") {
+        response = await fetch(`${url}/${payload}`, {method: 'GET', mode: 'cors',});
+    } else if (options.method == "POST") {
+        response = await fetch(url, {method: 'POST', mode: 'cors', body: payload});
+    }
 
     if (response.status != 200) {
         throw Error(`Status code ${response.status}.`);

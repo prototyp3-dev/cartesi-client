@@ -20,6 +20,8 @@ import {
     ReportDocument,
 } from "@/generated/graphql";
 
+import { GraphqlOptions, setDefaultGraphqlOptions, getGraphqlUrl } from "./lib"
+
 // define PartialReport type only with the desired fields of the full Report defined by the GraphQL schema
 export type PartialInput = Pick<Input, "index">;
 export type PartialReport = Pick<Report, "__typename" | "index" | "payload"> & {
@@ -115,3 +117,27 @@ export const getReport = async (
         throw new Error(error?.message);
     }
 };
+
+/**
+ * Queries a GraphQL server for reports based on input keys
+ * @param options options that have default values
+ * @returns List of reports, returned as PartialReport objects
+ */
+export const queryReports = async (
+    options?: GraphqlOptions
+): Promise<PartialReport[]> => {
+    options = setDefaultGraphqlOptions(options);
+    return getReports(getGraphqlUrl(options),options.inputIndex);
+}
+
+/**
+ * Queries a GraphQL server looking for a specific report
+ * @param options options that have default values
+ * @returns The corresponding report, returned as a full Report object
+ */
+export const queryReport = async (
+    options?: GraphqlOptions
+): Promise<Report> => {
+    options = setDefaultGraphqlOptions(options);
+    return getReport(getGraphqlUrl(options),options.inputIndex,options.outputIndex);
+}

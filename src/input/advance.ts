@@ -14,19 +14,19 @@ interface AdvanceOptions {
     cartesiNodeUrl?: string,
 }
 
-interface AdvanceInputOptions extends AdvanceOptions {
+export interface AdvanceInputOptions extends AdvanceOptions {
     inputBoxAddress?: string
 }
 
-interface ERC20DepositOptions extends AdvanceOptions {
+export interface ERC20DepositOptions extends AdvanceOptions {
     erc20PortalAddress?: string
 }
 
-interface ERC721DepositOptions extends AdvanceOptions {
+export interface ERC721DepositOptions extends AdvanceOptions {
     erc721PortalAddress?: string
 }
 
-interface ETherDepositOptions extends AdvanceOptions {
+export interface ETherDepositOptions extends AdvanceOptions {
     etherPortalAddress?: string
 }
 
@@ -59,7 +59,7 @@ function setDefaultAdvanceValues(options:AdvanceOptions):AdvanceOptions {
 export async function advanceInput(
     client:Signer,
     dappAddress:string,
-    payload:string,
+    payload:string|Uint8Array,
 ):Promise<AdvanceOutput>;
 
 /**
@@ -73,14 +73,14 @@ export async function advanceInput(
 export async function advanceInput(
     client:Signer,
     dappAddress:string,
-    payload:string,
+    payload:string|Uint8Array,
     options:AdvanceInputOptions
 ):Promise<AdvanceOutput|ContractReceipt>;
 
 export async function advanceInput(
     client:Signer,
     dappAddress:string,
-    payload:string,
+    payload:string|Uint8Array,
     options?:AdvanceInputOptions
 ):Promise<AdvanceOutput|ContractReceipt> {
     options = setDefaultAdvanceValues(options);
@@ -93,9 +93,17 @@ export async function advanceInput(
         client
     );
 
-    const payload_hex = utils.toUtf8Bytes(payload);
+    let payloadBytes: Uint8Array;
+    if (typeof payload == "string") {
+        if (utils.isHexString(payload))
+            payloadBytes = utils.arrayify(payload);
+        else
+            payloadBytes = utils.toUtf8Bytes(payload);
+    } else {
+        payloadBytes = payload;
+    }
     const input = await inputContract.addInput(
-        dappAddress, payload_hex);
+        dappAddress, payloadBytes);
     const receipt = await input.wait();
 
     // call is async, return addInput's receipt
