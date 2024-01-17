@@ -1,6 +1,9 @@
 import { utils } from "ethers";
 import { DEFAULT_CARTESI_NODE_URL } from "@/shared/default";
 
+
+const REJECT_STATUS = "Rejected";
+
 const DECODE_OPTIONS = ["no-decode", "utf-8", "uint8Array"] as const;
 type DECODE = typeof DECODE_OPTIONS;        // type x = readonly ['op1', 'op2', ...]
 type DECODE_OPTIONS_TYPE = DECODE[number];  // 'op1' | 'op2' | ...
@@ -85,12 +88,15 @@ export async function inspect(
     }
 
     if (response.status != 200) {
-        throw Error(`Status code ${response.status}.`);
+        throw new Error(`Status code ${response.status}.`);
     }
 
     const response_json:InspectResponse = await response.json();
+    if (response_json.status == REJECT_STATUS)
+        throw new Error(response_json.reports[0].payload);
 
     let response_payload:string;
+    if (response_json.reports == null) return null;
     if (options.aggregate) {
         response_payload = aggregate(response_json);
     } else {
@@ -122,5 +128,5 @@ function decodeTo(payload:string, decodeOption:DECODE_OPTIONS_TYPE):string|Uint8
         return utils.arrayify(payload);
     }
 
-    throw Error(`Unkown decode option ${decodeOption}`);
+    throw new Error(`Unkown decode option ${decodeOption}`);
 }

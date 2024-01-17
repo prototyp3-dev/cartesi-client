@@ -1,5 +1,5 @@
 import { Notice, Report, Voucher } from "@/generated/graphql";
-import { getInputResult } from "@/graphql/inputs";
+import { getInputResult, InputResult } from "@/graphql/inputs";
 import {
     DEFAULT_CARTESI_NODE_URL,
     DEFAULT_INPUT_BOX_ADDRESS,
@@ -10,8 +10,10 @@ import { InputBox__factory, ERC20Portal__factory, ERC721Portal__factory, IERC20_
 import { Signer, utils, ContractReceipt, BigNumber } from "ethers";
 
 interface AdvanceOptions {
-    sync?: boolean,
-    cartesiNodeUrl?: string,
+    sync?: boolean;
+    cartesiNodeUrl?: string;
+    initialDelay?: number;
+    delayInterval?: number;
 }
 
 export interface AdvanceInputOptions extends AdvanceOptions {
@@ -111,10 +113,9 @@ export async function advanceInput(
 
     // call is sync, fetch input processing result (reports, notices, and vouchers)
     const inputIndex = Number(receipt.events[0].args[1]._hex);
-    return await getInputResult(
-        `${options.cartesiNodeUrl}/graphql`,
-        inputIndex
-    );
+    const inputResultOptions: InputResult = options as InputResult;
+    inputResultOptions.inputIndex = inputIndex;
+    return await getInputResult(inputResultOptions);
 }
 
 
@@ -193,10 +194,9 @@ export async function advanceERC20Deposit(
 
     // call is sync, fetch input processing result (reports, notices, and vouchers)
     const inputIndex = Number(receipt.events[2].topics[2]);
-    return await getInputResult(
-        `${options.cartesiNodeUrl}/graphql`,
-        inputIndex
-    );
+    const inputResultOptions: InputResult = options as InputResult;
+    inputResultOptions.inputIndex = inputIndex;
+    return await getInputResult(inputResultOptions);
 }
 
 
@@ -265,10 +265,9 @@ export async function advanceERC721Deposit(
 
     // call is sync, fetch input processing result (reports, notices, and vouchers)
     const inputIndex = Number(receipt.events[1].topics[2]);
-    return await getInputResult(
-        `${options.cartesiNodeUrl}/graphql`,
-        inputIndex
-    );
+    const inputResultOptions: InputResult = options as InputResult;
+    inputResultOptions.inputIndex = inputIndex;
+    return await getInputResult(inputResultOptions);
 }
 
 
@@ -324,8 +323,7 @@ export async function advanceEtherDeposit(
 
     // call is sync, fetch input processing result (reports, notices, and vouchers)
     const inputIndex = Number(receipt.events[0].topics[2]);
-    return await getInputResult(
-        `${options.cartesiNodeUrl}/graphql`,
-        inputIndex
-    );
+    const inputResultOptions: InputResult = options as InputResult;
+    inputResultOptions.inputIndex = inputIndex;
+    return await getInputResult(inputResultOptions);
 }
