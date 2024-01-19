@@ -1,3 +1,4 @@
+"use client"
 import { createClient, fetchExchange } from "@urql/core";
 import { retryExchange } from '@urql/exchange-retry';
 import fetch from "cross-fetch";

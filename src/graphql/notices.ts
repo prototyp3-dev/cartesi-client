@@ -8,7 +8,7 @@
 // under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
-
+"use client"
 import { createClient, fetchExchange } from "@urql/core";
 import { retryExchange } from '@urql/exchange-retry';
 import fetch from "cross-fetch";
