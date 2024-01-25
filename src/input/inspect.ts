@@ -12,11 +12,16 @@ const METHOD_OPTIONS = ["GET", "POST"] as const;
 type METHOD = typeof METHOD_OPTIONS;        // type x = readonly ['op1', 'op2', ...]
 type METHOD_OPTIONS_TYPE = METHOD[number];  // 'op1' | 'op2' | ...
 
+const CACHE_OPTIONS = ['no-store','force-cache'] as const;
+type CACHE = typeof CACHE_OPTIONS;        // type x = readonly ['op1', 'op2', ...]
+type CACHE_OPTIONS_TYPE = CACHE[number];  // 'op1' | 'op2' | ...
+
 export interface InspectOptions {
-    cartesiNodeUrl?: string,
-    aggregate?:boolean,
-    decodeTo?:DECODE_OPTIONS_TYPE,
-    method?:METHOD_OPTIONS_TYPE
+    cartesiNodeUrl?: string;
+    aggregate?:boolean;
+    decodeTo?:DECODE_OPTIONS_TYPE;
+    method?:METHOD_OPTIONS_TYPE;
+    cache?:CACHE_OPTIONS_TYPE;
 }
 
 interface InspectResponse {
@@ -82,9 +87,9 @@ export async function inspect(
     let url = `${options.cartesiNodeUrl}/inspect`;
     let response: Response;
     if (options.method == "GET") {
-        response = await fetch(`${url}/${payload}`, {method: 'GET', mode: 'cors',});
+        response = await fetch(`${url}/${payload}`, {method: 'GET', mode: 'cors', cache:options.cache});
     } else if (options.method == "POST") {
-        response = await fetch(url, {method: 'POST', mode: 'cors', body: payload});
+        response = await fetch(url, {method: 'POST', mode: 'cors', cache:options.cache, body: payload});
     }
 
     if (response.status != 200) {
