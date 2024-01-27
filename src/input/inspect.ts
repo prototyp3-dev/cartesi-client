@@ -12,9 +12,9 @@ const METHOD_OPTIONS = ["GET", "POST"] as const;
 type METHOD = typeof METHOD_OPTIONS;        // type x = readonly ['op1', 'op2', ...]
 type METHOD_OPTIONS_TYPE = METHOD[number];  // 'op1' | 'op2' | ...
 
-const CACHE_OPTIONS = ['no-store','force-cache'] as const;
+const CACHE_OPTIONS = ['default','no-store','reload','no-cache','force-cache','only-if-cached'] as const;
 type CACHE = typeof CACHE_OPTIONS;        // type x = readonly ['op1', 'op2', ...]
-type CACHE_OPTIONS_TYPE = CACHE[number];  // 'op1' | 'op2' | ...
+export type CACHE_OPTIONS_TYPE = CACHE[number];  // 'op1' | 'op2' | ...
 
 export interface InspectOptions {
     cartesiNodeUrl?: string;
