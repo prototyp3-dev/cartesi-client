@@ -5,8 +5,9 @@ import {
     DEFAULT_INPUT_BOX_ADDRESS,
     DEFAULT_ERC20PORTAL_ADDRESS,
     DEFAULT_ERC721PORTAL_ADDRESS,
-    DEFAULT_ETHERPORTAL_ADDRESS } from "@/shared/default";
-import { InputBox__factory, ERC20Portal__factory, ERC721Portal__factory, IERC20__factory, IERC721__factory, EtherPortal__factory } from "@cartesi/rollups";
+    DEFAULT_ETHERPORTAL_ADDRESS,
+    DEFAULT_DAPP_RELAY_ADDRESS } from "@/shared/default";
+import { InputBox__factory, ERC20Portal__factory, ERC721Portal__factory, IERC20__factory, IERC721__factory, EtherPortal__factory, DAppAddressRelay__factory } from "@cartesi/rollups";
 import { Signer, utils, ContractReceipt, BigNumber } from "ethers";
 
 interface AdvanceOptions {
@@ -30,6 +31,10 @@ export interface ERC721DepositOptions extends AdvanceOptions {
 
 export interface ETherDepositOptions extends AdvanceOptions {
     etherPortalAddress?: string
+}
+
+export interface DappRelayOptions extends AdvanceOptions {
+    dappRelayAddress?: string
 }
 
 export interface AdvanceOutput {
@@ -316,6 +321,59 @@ export async function advanceEtherDeposit(
     // deposit
     const deposit = await etherPortal.depositEther(
         dappAddress, "0x", {value: value});
+    const receipt = await deposit.wait();
+
+    // call is async, return depositEther' receipt
+    if (!options.sync) return receipt;
+
+    // call is sync, fetch input processing result (reports, notices, and vouchers)
+    const inputIndex = Number(receipt.events[0].topics[2]);
+    const inputResultOptions: InputResult = options as InputResult;
+    inputResultOptions.inputIndex = inputIndex;
+    return await getInputResult(inputResultOptions);
+}
+
+
+/**
+ * Queries a GraphQL server for notices based on an input index
+ * @param client signer
+ * @param dappAddress Cartesi Rollup DApp contract address
+ * @returns Object with a list of notices and reports for an input or addInput's receipt
+ */
+export async function advanceDAppRelay(
+    client:Signer,
+    dappAddress:string
+):Promise<AdvanceOutput>;
+
+/**
+ * Queries a GraphQL server for notices based on an input index
+ * @param client signer
+ * @param dappAddress Cartesi Rollup DApp contract address
+ * @param tokenAddress ERC20 token address
+ * @param options options that have default values
+ * @returns Object with a list of notices and reports for an input or addInput's receipt
+ */
+export async function advanceDAppRelay(
+    client:Signer, dappAddress:string,
+    options:DappRelayOptions
+):Promise<AdvanceOutput|ContractReceipt>;
+
+export async function advanceDAppRelay(
+    client:Signer, dappAddress:string,
+    options?:DappRelayOptions
+):Promise<AdvanceOutput|ContractReceipt> {
+    options = setDefaultAdvanceValues(options);
+    if (options.dappRelayAddress === undefined) {
+        options.dappRelayAddress = DEFAULT_DAPP_RELAY_ADDRESS;
+    }
+
+    const dappRelay = DAppAddressRelay__factory.connect(
+        options.dappRelayAddress,
+        client
+    );
+
+    // deposit
+    const deposit = await dappRelay.relayDAppAddress(dappAddress);
     const receipt = await deposit.wait();
 
     // call is async, return depositEther' receipt
