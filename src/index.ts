@@ -18,5 +18,5 @@ export { GraphqlOptions } from "./graphql/lib"
 export { PartialNotice } from "./graphql/notices";
 export { PartialVoucher } from "./graphql/vouchers";
 export { PartialReport } from "./graphql/reports";
-export { AdvanceOutput, AdvanceInputOptions, ERC20DepositOptions, ETherDepositOptions, ERC721DepositOptions } from "./input/advance";
+export { AdvanceOutput, AdvanceInputOptions, ERC20DepositOptions, EtherDepositOptions, ERC721DepositOptions } from "./input/advance";
 export { InspectOptions, CACHE_OPTIONS_TYPE } from "./input/inspect";

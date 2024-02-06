@@ -8,7 +8,7 @@ import {
     DEFAULT_ETHERPORTAL_ADDRESS,
     DEFAULT_DAPP_RELAY_ADDRESS } from "@/shared/default";
 import { InputBox__factory, ERC20Portal__factory, ERC721Portal__factory, IERC20__factory, IERC721__factory, EtherPortal__factory, DAppAddressRelay__factory } from "@cartesi/rollups";
-import { Signer, utils, ContractReceipt, BigNumber } from "ethers";
+import { Signer, utils, ContractReceipt, BigNumber, ethers } from "ethers";
 
 interface AdvanceOptions {
     sync?: boolean;
@@ -22,14 +22,15 @@ export interface AdvanceInputOptions extends AdvanceOptions {
 }
 
 export interface ERC20DepositOptions extends AdvanceOptions {
-    erc20PortalAddress?: string
+    erc20PortalAddress?: string,
+    decimals?: number
 }
 
 export interface ERC721DepositOptions extends AdvanceOptions {
     erc721PortalAddress?: string
 }
 
-export interface ETherDepositOptions extends AdvanceOptions {
+export interface EtherDepositOptions extends AdvanceOptions {
     etherPortalAddress?: string
 }
 
@@ -137,7 +138,7 @@ export async function advanceERC20Deposit(
     client:Signer,
     dappAddress:string,
     tokenAddress:string,
-    amount:number
+    amount:ethers.BigNumberish
 ):Promise<AdvanceOutput>;
 
 /**
@@ -151,13 +152,13 @@ export async function advanceERC20Deposit(
  */
 export async function advanceERC20Deposit(
     client:Signer, dappAddress:string,
-    tokenAddress:string, amount:number,
+    tokenAddress:string, amount:ethers.BigNumberish,
     options:ERC20DepositOptions
 ):Promise<AdvanceOutput|ContractReceipt>;
 
 export async function advanceERC20Deposit(
     client:Signer, dappAddress:string,
-    tokenAddress:string, amount:number,
+    tokenAddress:string, amount:ethers.BigNumberish,
     options?:ERC20DepositOptions
 ):Promise<AdvanceOutput|ContractReceipt> {
     options = setDefaultAdvanceValues(options);
@@ -176,12 +177,18 @@ export async function advanceERC20Deposit(
         client
     );
     const signerAddress = await client.getAddress();
+
+    let correctedAmount = BigNumber.from(amount);
+    if (options.decimals != undefined) {
+        correctedAmount = ethers.utils.parseUnits(`${amount}`,options.decimals);
+    }
+
     const allowance = await erc20Contract.allowance(
         signerAddress,
         options.erc20PortalAddress
     );
-    if (allowance.lt(amount)) {
-        const allowanceApproveAmount = BigNumber.from(amount).sub(allowance);
+    if (allowance.lt(correctedAmount)) {
+        const allowanceApproveAmount = correctedAmount.sub(allowance);
         const tx = await erc20Contract.approve(
             options.erc20PortalAddress,
             allowanceApproveAmount
@@ -191,7 +198,7 @@ export async function advanceERC20Deposit(
 
     // deposit
     const deposit = await erc20Portal.depositERC20Tokens(
-        tokenAddress, dappAddress, amount, "0x");
+        tokenAddress, dappAddress, correctedAmount, "0x");
     const receipt = await deposit.wait();
 
     // call is async, return depositERC20Tokens' receipt
@@ -218,7 +225,7 @@ export async function advanceERC721Deposit(
     client:Signer,
     dappAddress:string,
     tokenAddress:string,
-    tokenId:number
+    tokenId:ethers.BigNumberish
 ):Promise<AdvanceOutput>;
 
 /**
@@ -232,13 +239,13 @@ export async function advanceERC721Deposit(
  */
 export async function advanceERC721Deposit(
     client:Signer, dappAddress:string,
-    tokenAddress:string, tokenId:number,
+    tokenAddress:string, tokenId:ethers.BigNumberish,
     options:ERC721DepositOptions
 ):Promise<AdvanceOutput|ContractReceipt>;
 
 export async function advanceERC721Deposit(
     client:Signer, dappAddress:string,
-    tokenAddress:string, tokenId:number,
+    tokenAddress:string, tokenId:ethers.BigNumberish,
     options?:ERC721DepositOptions
 ):Promise<AdvanceOutput|ContractReceipt> {
     options = setDefaultAdvanceValues(options);
@@ -286,7 +293,7 @@ export async function advanceERC721Deposit(
 export async function advanceEtherDeposit(
     client:Signer,
     dappAddress:string,
-    amount:number
+    amount:ethers.BigNumberish
 ):Promise<AdvanceOutput>;
 
 /**
@@ -300,12 +307,12 @@ export async function advanceEtherDeposit(
  */
 export async function advanceEtherDeposit(
     client:Signer, dappAddress:string,
-    amount:number, options:ETherDepositOptions
+    amount:ethers.BigNumberish, options:EtherDepositOptions
 ):Promise<AdvanceOutput|ContractReceipt>;
 
 export async function advanceEtherDeposit(
     client:Signer, dappAddress:string,
-    amount:number, options?:ETherDepositOptions
+    amount:ethers.BigNumberish, options?:EtherDepositOptions
 ):Promise<AdvanceOutput|ContractReceipt> {
     options = setDefaultAdvanceValues(options);
     if (options.etherPortalAddress === undefined) {
