@@ -85,7 +85,7 @@ export const getInputResult = async (
                 }
 
                 if (data.input.status != CompletionStatus.Accepted) {
-                    const errorMessage = result.reports.length > 0 ? result.reports[0].payload : `Advance error: ${data.input.status}`
+                    const errorMessage = result.reports.length > 0 ? result.reports[result.reports.length - 1].payload : `Advance error: ${data.input.status}`
                     throw new Error(errorMessage);
                 }
             }
