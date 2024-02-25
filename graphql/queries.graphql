@@ -120,6 +120,7 @@ query report($reportIndex: Int!, $inputIndex: Int!) {
     index
     input {
       index
+      status
     }
     payload
   }
@@ -132,6 +133,7 @@ query reports {
         index
         input {
           index
+          status
         }
         payload
       }
@@ -147,6 +149,7 @@ query reportsByInput($inputIndex: Int!) {
           index
           input {
             index
+            status
           }
           payload
         }
@@ -160,6 +163,7 @@ query reportsByInput($inputIndex: Int!) {
 
 query getInputResult($inputIndex: Int!) {
   input(index: $inputIndex) {
+    status
     reports {
       edges {
         node {

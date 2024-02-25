@@ -1,33 +1,41 @@
 import { Notice, Report, Voucher } from "@/generated/graphql";
-import { getInputResult } from "@/graphql/inputs";
+import { getInputResult, InputResult } from "@/graphql/inputs";
 import {
     DEFAULT_CARTESI_NODE_URL,
     DEFAULT_INPUT_BOX_ADDRESS,
     DEFAULT_ERC20PORTAL_ADDRESS,
     DEFAULT_ERC721PORTAL_ADDRESS,
-    DEFAULT_ETHERPORTAL_ADDRESS } from "@/shared/default";
-import { InputBox__factory, ERC20Portal__factory, ERC721Portal__factory, IERC20__factory, IERC721__factory, EtherPortal__factory } from "@cartesi/rollups";
-import { Signer, utils, ContractReceipt, BigNumber } from "ethers";
+    DEFAULT_ETHERPORTAL_ADDRESS,
+    DEFAULT_DAPP_RELAY_ADDRESS } from "@/shared/default";
+import { InputBox__factory, ERC20Portal__factory, ERC721Portal__factory, IERC20__factory, IERC721__factory, EtherPortal__factory, DAppAddressRelay__factory } from "@cartesi/rollups";
+import { Signer, utils, ContractReceipt, BigNumber, ethers } from "ethers";
 
 interface AdvanceOptions {
-    sync?: boolean,
-    cartesiNodeUrl?: string,
+    sync?: boolean;
+    cartesiNodeUrl?: string;
+    initialDelay?: number;
+    delayInterval?: number;
 }
 
-interface AdvanceInputOptions extends AdvanceOptions {
+export interface AdvanceInputOptions extends AdvanceOptions {
     inputBoxAddress?: string
 }
 
-interface ERC20DepositOptions extends AdvanceOptions {
-    erc20PortalAddress?: string
+export interface ERC20DepositOptions extends AdvanceOptions {
+    erc20PortalAddress?: string,
+    decimals?: number
 }
 
-interface ERC721DepositOptions extends AdvanceOptions {
+export interface ERC721DepositOptions extends AdvanceOptions {
     erc721PortalAddress?: string
 }
 
-interface ETherDepositOptions extends AdvanceOptions {
+export interface EtherDepositOptions extends AdvanceOptions {
     etherPortalAddress?: string
+}
+
+export interface DappRelayOptions extends AdvanceOptions {
+    dappRelayAddress?: string
 }
 
 export interface AdvanceOutput {
@@ -59,7 +67,7 @@ function setDefaultAdvanceValues(options:AdvanceOptions):AdvanceOptions {
 export async function advanceInput(
     client:Signer,
     dappAddress:string,
-    payload:string,
+    payload:string|Uint8Array,
 ):Promise<AdvanceOutput>;
 
 /**
@@ -73,14 +81,14 @@ export async function advanceInput(
 export async function advanceInput(
     client:Signer,
     dappAddress:string,
-    payload:string,
+    payload:string|Uint8Array,
     options:AdvanceInputOptions
 ):Promise<AdvanceOutput|ContractReceipt>;
 
 export async function advanceInput(
     client:Signer,
     dappAddress:string,
-    payload:string,
+    payload:string|Uint8Array,
     options?:AdvanceInputOptions
 ):Promise<AdvanceOutput|ContractReceipt> {
     options = setDefaultAdvanceValues(options);
@@ -93,9 +101,17 @@ export async function advanceInput(
         client
     );
 
-    const payload_hex = utils.toUtf8Bytes(payload);
+    let payloadBytes: Uint8Array;
+    if (typeof payload == "string") {
+        if (utils.isHexString(payload))
+            payloadBytes = utils.arrayify(payload);
+        else
+            payloadBytes = utils.toUtf8Bytes(payload);
+    } else {
+        payloadBytes = payload;
+    }
     const input = await inputContract.addInput(
-        dappAddress, payload_hex);
+        dappAddress, payloadBytes);
     const receipt = await input.wait();
 
     // call is async, return addInput's receipt
@@ -103,10 +119,9 @@ export async function advanceInput(
 
     // call is sync, fetch input processing result (reports, notices, and vouchers)
     const inputIndex = Number(receipt.events[0].args[1]._hex);
-    return await getInputResult(
-        `${options.cartesiNodeUrl}/graphql`,
-        inputIndex
-    );
+    const inputResultOptions: InputResult = options as InputResult;
+    inputResultOptions.inputIndex = inputIndex;
+    return await getInputResult(inputResultOptions);
 }
 
 
@@ -123,7 +138,7 @@ export async function advanceERC20Deposit(
     client:Signer,
     dappAddress:string,
     tokenAddress:string,
-    amount:number
+    amount:ethers.BigNumberish
 ):Promise<AdvanceOutput>;
 
 /**
@@ -137,13 +152,13 @@ export async function advanceERC20Deposit(
  */
 export async function advanceERC20Deposit(
     client:Signer, dappAddress:string,
-    tokenAddress:string, amount:number,
+    tokenAddress:string, amount:ethers.BigNumberish,
     options:ERC20DepositOptions
 ):Promise<AdvanceOutput|ContractReceipt>;
 
 export async function advanceERC20Deposit(
     client:Signer, dappAddress:string,
-    tokenAddress:string, amount:number,
+    tokenAddress:string, amount:ethers.BigNumberish,
     options?:ERC20DepositOptions
 ):Promise<AdvanceOutput|ContractReceipt> {
     options = setDefaultAdvanceValues(options);
@@ -162,12 +177,18 @@ export async function advanceERC20Deposit(
         client
     );
     const signerAddress = await client.getAddress();
+
+    let correctedAmount = BigNumber.from(amount);
+    if (options.decimals != undefined) {
+        correctedAmount = ethers.utils.parseUnits(`${amount}`,options.decimals);
+    }
+
     const allowance = await erc20Contract.allowance(
         signerAddress,
         options.erc20PortalAddress
     );
-    if (allowance.lt(amount)) {
-        const allowanceApproveAmount = BigNumber.from(amount).sub(allowance);
+    if (allowance.lt(correctedAmount)) {
+        const allowanceApproveAmount = correctedAmount.sub(allowance);
         const tx = await erc20Contract.approve(
             options.erc20PortalAddress,
             allowanceApproveAmount
@@ -177,7 +198,7 @@ export async function advanceERC20Deposit(
 
     // deposit
     const deposit = await erc20Portal.depositERC20Tokens(
-        tokenAddress, dappAddress, amount, "0x");
+        tokenAddress, dappAddress, correctedAmount, "0x");
     const receipt = await deposit.wait();
 
     // call is async, return depositERC20Tokens' receipt
@@ -185,10 +206,9 @@ export async function advanceERC20Deposit(
 
     // call is sync, fetch input processing result (reports, notices, and vouchers)
     const inputIndex = Number(receipt.events[2].topics[2]);
-    return await getInputResult(
-        `${options.cartesiNodeUrl}/graphql`,
-        inputIndex
-    );
+    const inputResultOptions: InputResult = options as InputResult;
+    inputResultOptions.inputIndex = inputIndex;
+    return await getInputResult(inputResultOptions);
 }
 
 
@@ -205,7 +225,7 @@ export async function advanceERC721Deposit(
     client:Signer,
     dappAddress:string,
     tokenAddress:string,
-    tokenId:number
+    tokenId:ethers.BigNumberish
 ):Promise<AdvanceOutput>;
 
 /**
@@ -219,13 +239,13 @@ export async function advanceERC721Deposit(
  */
 export async function advanceERC721Deposit(
     client:Signer, dappAddress:string,
-    tokenAddress:string, tokenId:number,
+    tokenAddress:string, tokenId:ethers.BigNumberish,
     options:ERC721DepositOptions
 ):Promise<AdvanceOutput|ContractReceipt>;
 
 export async function advanceERC721Deposit(
     client:Signer, dappAddress:string,
-    tokenAddress:string, tokenId:number,
+    tokenAddress:string, tokenId:ethers.BigNumberish,
     options?:ERC721DepositOptions
 ):Promise<AdvanceOutput|ContractReceipt> {
     options = setDefaultAdvanceValues(options);
@@ -257,10 +277,9 @@ export async function advanceERC721Deposit(
 
     // call is sync, fetch input processing result (reports, notices, and vouchers)
     const inputIndex = Number(receipt.events[1].topics[2]);
-    return await getInputResult(
-        `${options.cartesiNodeUrl}/graphql`,
-        inputIndex
-    );
+    const inputResultOptions: InputResult = options as InputResult;
+    inputResultOptions.inputIndex = inputIndex;
+    return await getInputResult(inputResultOptions);
 }
 
 
@@ -274,7 +293,7 @@ export async function advanceERC721Deposit(
 export async function advanceEtherDeposit(
     client:Signer,
     dappAddress:string,
-    amount:number
+    amount:ethers.BigNumberish
 ):Promise<AdvanceOutput>;
 
 /**
@@ -288,12 +307,12 @@ export async function advanceEtherDeposit(
  */
 export async function advanceEtherDeposit(
     client:Signer, dappAddress:string,
-    amount:number, options:ETherDepositOptions
+    amount:ethers.BigNumberish, options:EtherDepositOptions
 ):Promise<AdvanceOutput|ContractReceipt>;
 
 export async function advanceEtherDeposit(
     client:Signer, dappAddress:string,
-    amount:number, options?:ETherDepositOptions
+    amount:ethers.BigNumberish, options?:EtherDepositOptions
 ):Promise<AdvanceOutput|ContractReceipt> {
     options = setDefaultAdvanceValues(options);
     if (options.etherPortalAddress === undefined) {
@@ -316,8 +335,60 @@ export async function advanceEtherDeposit(
 
     // call is sync, fetch input processing result (reports, notices, and vouchers)
     const inputIndex = Number(receipt.events[0].topics[2]);
-    return await getInputResult(
-        `${options.cartesiNodeUrl}/graphql`,
-        inputIndex
+    const inputResultOptions: InputResult = options as InputResult;
+    inputResultOptions.inputIndex = inputIndex;
+    return await getInputResult(inputResultOptions);
+}
+
+
+/**
+ * Queries a GraphQL server for notices based on an input index
+ * @param client signer
+ * @param dappAddress Cartesi Rollup DApp contract address
+ * @returns Object with a list of notices and reports for an input or addInput's receipt
+ */
+export async function advanceDAppRelay(
+    client:Signer,
+    dappAddress:string
+):Promise<AdvanceOutput>;
+
+/**
+ * Queries a GraphQL server for notices based on an input index
+ * @param client signer
+ * @param dappAddress Cartesi Rollup DApp contract address
+ * @param tokenAddress ERC20 token address
+ * @param options options that have default values
+ * @returns Object with a list of notices and reports for an input or addInput's receipt
+ */
+export async function advanceDAppRelay(
+    client:Signer, dappAddress:string,
+    options:DappRelayOptions
+):Promise<AdvanceOutput|ContractReceipt>;
+
+export async function advanceDAppRelay(
+    client:Signer, dappAddress:string,
+    options?:DappRelayOptions
+):Promise<AdvanceOutput|ContractReceipt> {
+    options = setDefaultAdvanceValues(options);
+    if (options.dappRelayAddress === undefined) {
+        options.dappRelayAddress = DEFAULT_DAPP_RELAY_ADDRESS;
+    }
+
+    const dappRelay = DAppAddressRelay__factory.connect(
+        options.dappRelayAddress,
+        client
     );
+
+    // deposit
+    const deposit = await dappRelay.relayDAppAddress(dappAddress);
+    const receipt = await deposit.wait();
+
+    // call is async, return depositEther' receipt
+    if (!options.sync) return receipt;
+
+    // call is sync, fetch input processing result (reports, notices, and vouchers)
+    const inputIndex = Number(receipt.events[0].topics[2]);
+    const inputResultOptions: InputResult = options as InputResult;
+    inputResultOptions.inputIndex = inputIndex;
+    return await getInputResult(inputResultOptions);
 }

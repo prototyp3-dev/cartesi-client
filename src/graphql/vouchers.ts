@@ -8,7 +8,7 @@
 // under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
-
+"use client"
 import { createClient, fetchExchange } from "@urql/core";
 import fetch from "cross-fetch";
 import {
@@ -18,6 +18,8 @@ import {
     Input,
     VoucherDocument,
 } from "@/generated/graphql";
+
+import { GraphqlOptions, setDefaultGraphqlOptions, getGraphqlUrl } from "./lib"
 
 // define PartialVoucher type only with the desired fields of the full Voucher defined by the GraphQL schema
 export type PartialInput = Pick<Input, "index">;
@@ -115,3 +117,27 @@ export const getVoucher = async (
         throw new Error(error?.message);
     }
 };
+
+/**
+ * Queries a GraphQL server for vouchers based on input keys
+ * @param options options that have default values
+ * @returns List of vouchers, returned as PartialVoucher objects
+ */
+export const queryVouchers = async (
+    options?: GraphqlOptions
+): Promise<PartialVoucher[]> => {
+    options = setDefaultGraphqlOptions(options);
+    return getVouchers(getGraphqlUrl(options),options.inputIndex);
+}
+
+/**
+ * Queries a GraphQL server looking for a specific voucher
+ * @param options options that have default values
+ * @returns The corresponding voucher, returned as a full Voucher object
+ */
+export const queryVoucher = async (
+    options?: GraphqlOptions
+): Promise<Voucher> => {
+    options = setDefaultGraphqlOptions(options);
+    return getVoucher(getGraphqlUrl(options),options.inputIndex,options.outputIndex);
+}

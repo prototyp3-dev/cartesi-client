@@ -99,6 +99,16 @@ Deposit the ERC721 token with address **tokenAddress** and id **tokenId** to the
 | options.cartessiNodeUrl     | false    | string  | http://localhost:8080                      |
 | options.erc721PortalAddress | false    | string  | 0x237F8DD094C0e47f4236f12b4Fa01d6Dae89fb87 |
 
+### advanceDAppRelay
+Sends the dapp address to the Cartesi DApp.
+
+| Parameter                  | Required | Type    | Default                                    |
+|----------------------------|----------|---------|--------------------------------------------|
+| client                     | true     | Signer  | -                                          |
+| dappAddress                | true     | string  | -                                          |
+| options.sync               | false    | boolean | true                                       |
+| options.cartessiNodeUrl    | false    | string  | http://localhost:8080                      |
+| options.dappRelayAddress   | false    | string  | 0xF5DE34d6BbC0446E2a45719E718efEbaaE179daE |
 
 ## Inspect
 ### inspect

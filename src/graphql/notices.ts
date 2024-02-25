@@ -8,7 +8,7 @@
 // under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
-
+"use client"
 import { createClient, fetchExchange } from "@urql/core";
 import { retryExchange } from '@urql/exchange-retry';
 import fetch from "cross-fetch";
@@ -19,6 +19,8 @@ import {
     Input,
     NoticeDocument,
 } from "@/generated/graphql";
+
+import { GraphqlOptions, setDefaultGraphqlOptions, getGraphqlUrl } from "./lib"
 
 // define PartialNotice type only with the desired fields of the full Notice defined by the GraphQL schema
 export type PartialInput = Pick<Input, "index">;
@@ -115,3 +117,27 @@ export const getNotice = async (
         throw new Error(error?.message);
     }
 };
+
+/**
+ * Queries a GraphQL server for notices based on input keys
+ * @param options options that have default values
+ * @returns List of notices, returned as PartialNotice objects
+ */
+export const queryNotices = async (
+    options?: GraphqlOptions
+): Promise<PartialNotice[]> => {
+    options = setDefaultGraphqlOptions(options);
+    return getNotices(getGraphqlUrl(options),options.inputIndex);
+}
+
+/**
+ * Queries a GraphQL server looking for a specific notice
+ * @param options options that have default values
+ * @returns The corresponding notice, returned as a full Notice object
+ */
+export const queryNotice = async (
+    options?: GraphqlOptions
+): Promise<Notice> => {
+    options = setDefaultGraphqlOptions(options);
+    return getNotice(getGraphqlUrl(options),options.inputIndex,options.outputIndex);
+}
