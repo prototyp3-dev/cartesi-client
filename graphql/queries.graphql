@@ -6,6 +6,8 @@ query notice($noticeIndex: Int!, $inputIndex: Int!) {
     input {
       index
       timestamp
+      msgSender
+      blockNumber
     }
     payload
     proof {
@@ -32,6 +34,8 @@ query notices {
         input {
           index
           timestamp
+          msgSender
+          blockNumber
         }
         payload
       }
@@ -48,6 +52,8 @@ query noticesByInput($inputIndex: Int!) {
           input {
             index
             timestamp
+            msgSender
+            blockNumber
           }
           payload
         }
@@ -65,6 +71,8 @@ query voucher($voucherIndex: Int!, $inputIndex: Int!) {
     input {
       index
       timestamp
+      msgSender
+      blockNumber
     }
     destination
     payload
@@ -92,6 +100,8 @@ query vouchers {
         input {
           index
           timestamp
+          msgSender
+          blockNumber
         }
         destination
         payload
@@ -109,6 +119,8 @@ query vouchersByInput($inputIndex: Int!) {
           input {
             index
             timestamp
+            msgSender
+            blockNumber
           }
           destination
           payload
@@ -128,6 +140,8 @@ query report($reportIndex: Int!, $inputIndex: Int!) {
       index
       status
       timestamp
+      msgSender
+      blockNumber
     }
     payload
   }
@@ -142,6 +156,8 @@ query reports {
           index
           status
           timestamp
+          msgSender
+          blockNumber
         }
         payload
       }
@@ -159,6 +175,8 @@ query reportsByInput($inputIndex: Int!) {
             index
             status
             timestamp
+            msgSender
+            blockNumber
           }
           payload
         }
@@ -174,6 +192,8 @@ query getInputResult($inputIndex: Int!) {
   input(index: $inputIndex) {
     status
     timestamp
+    msgSender
+    blockNumber
     reports {
       edges {
         node {
@@ -208,5 +228,15 @@ query getInputResult($inputIndex: Int!) {
         }
       }
     }
+  }
+}
+
+query getInput($inputIndex: Int!) {
+  input(index: $inputIndex) {
+    status
+    timestamp
+    msgSender
+    blockNumber
+    payload
   }
 }
