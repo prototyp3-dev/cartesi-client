@@ -8,7 +8,9 @@ import {
     Report,
     Voucher,
     GetInputResultQuery,
-    CompletionStatus
+    CompletionStatus,
+    Input,
+    GetInputDocument
 } from "@/generated/graphql";
 
 import { GraphqlOptions, setDefaultGraphqlOptions, getGraphqlUrl } from "./lib"
@@ -115,4 +117,51 @@ export const queryInputResult = async (
     }
     options = setDefaultGraphqlOptions(options) as InputResult;
     return getInputResult(options);
+}
+
+/**
+ * Queries a GraphQL server looking for a specific input
+ * @param url URL of the GraphQL server
+ * @param inputIndex input index
+ * @returns The corresponding input
+ */
+export const getInput = async (
+    url: string,
+    inputIndex: number
+): Promise<Input> => {
+    // create GraphQL client to reader server
+    const client = createClient({ url, exchanges: [retryExchange({
+        initialDelayMs: 2000, // 2 seconds
+        maxNumberAttempts: 3,
+        retryIf: error => { // retry if has a graphql error (ex: notice not found for this inputIndex)
+            console.log("Checking error then retrying...")
+            return !!(error.graphQLErrors.length > 0);
+        }}), fetchExchange], fetch });
+
+    // query the GraphQL server for the input
+    console.log(
+        `querying ${url} for input with index "${inputIndex}"...`
+    );
+
+    const { data, error } = await client
+        .query(GetInputDocument, { inputIndex })
+        .toPromise();
+
+    if (data?.input) {
+        return data.input as Input;
+    } else {
+        throw new Error(error?.message);
+    }
+};
+
+/**
+ * Queries a GraphQL server looking for a specific input
+ * @param options options that have default values
+ * @returns The corresponding input
+ */
+export const queryInput = async (
+    options?: GraphqlOptions
+): Promise<Input> => {
+    options = setDefaultGraphqlOptions(options);
+    return getInput(getGraphqlUrl(options),options.inputIndex);
 }

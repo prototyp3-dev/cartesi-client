@@ -1,5 +1,5 @@
 // low-level functions
-export { getInputResult } from "./graphql/inputs";
+export { getInputResult, getInput, queryInput } from "./graphql/inputs";
 export { getNotice, getNotices, queryNotice, queryNotices } from "./graphql/notices";
 export { getReport, getReports, queryReport, queryReports } from "./graphql/reports";
 export { getVoucher, getVouchers, queryVoucher, queryVouchers } from "./graphql/vouchers";
@@ -13,7 +13,7 @@ export { validateNoticeFromParams } from "./output/notice";
 
 
 // types
-export { Report, Notice, Voucher, Maybe, Proof } from "./generated/graphql";
+export { Report, Notice, Voucher, Maybe, Proof, Input } from "./generated/graphql";
 export { GraphqlOptions } from "./graphql/lib"
 export { PartialNotice } from "./graphql/notices";
 export { PartialVoucher } from "./graphql/vouchers";
