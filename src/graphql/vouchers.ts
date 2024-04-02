@@ -8,18 +8,21 @@
 // under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
-"use client"
-import { createClient, fetchExchange } from "@urql/core";
-import fetch from "cross-fetch";
 import {
     VouchersDocument,
     VouchersByInputDocument,
     Voucher,
     Input,
     VoucherDocument,
+    VouchersByInputQueryVariables,
+    VouchersByInputQuery,
+    VouchersQuery,
+    VoucherQuery,
+    VoucherQueryVariables,
 } from "@/generated/graphql";
 
 import { GraphqlOptions, setDefaultGraphqlOptions, getGraphqlUrl } from "./lib"
+import request from "graphql-request";
 
 // define PartialVoucher type only with the desired fields of the full Voucher defined by the GraphQL schema
 export type PartialInput = Pick<Input, "index">;
@@ -48,21 +51,14 @@ export const getVouchers = async (
     url: string,
     inputIndex?: number
 ): Promise<PartialVoucher[]> => {
-    // create GraphQL client to reader server
-    const client = createClient({ url, exchanges: [fetchExchange], fetch });
-
-    // query the GraphQL server for vouchers corresponding to the input index
     console.log(
         `querying ${url} for vouchers of input index "${inputIndex}"...`
     );
 
     if (inputIndex !== undefined) {
+        const variables:VouchersByInputQueryVariables = {inputIndex: inputIndex};
         // list vouchers querying by input
-        const { data, error } = await client
-            .query(VouchersByInputDocument, {
-                inputIndex: inputIndex,
-            })
-            .toPromise();
+        const data:VouchersByInputQuery = await request(url, VouchersByInputDocument, variables);
         if (data?.input?.vouchers?.edges) {
             return data.input.vouchers.edges
                 .filter(isPartialVoucherEdge)
@@ -72,9 +68,7 @@ export const getVouchers = async (
         }
     } else {
         // list vouchers using top-level query
-        const { data, error } = await client
-            .query(VouchersDocument, {})
-            .toPromise();
+        const data:VouchersQuery = await request(url, VouchersDocument);
         if (data?.vouchers?.edges) {
             return data.vouchers.edges
                 .filter(isPartialVoucherEdge)
@@ -100,21 +94,18 @@ export const getVoucher = async (
     inputIndex: number
 ): Promise<Voucher> => {
     // create GraphQL client to reader server
-    const client = createClient({ url, exchanges: [fetchExchange], fetch });
-
     // query the GraphQL server for the voucher
     console.log(
         `querying ${url} for voucher with index "${voucherIndex}" from input "${inputIndex}"...`
     );
 
-    const { data, error } = await client
-        .query(VoucherDocument, { voucherIndex, inputIndex })
-        .toPromise();
+    const variables:VoucherQueryVariables = {inputIndex: inputIndex, voucherIndex: voucherIndex};
+    const data:VoucherQuery = await request(url, VoucherDocument, variables);
 
     if (data?.voucher) {
         return data.voucher as Voucher;
     } else {
-        throw new Error(error?.message);
+        throw new Error("Voucher not found.");
     }
 };
 

@@ -1,8 +1,7 @@
-import { advanceInput } from "../src/index";
+import { AdvanceOutput, advanceInput } from "../src/index";
 import { TransactionReceipt } from "@ethersproject/providers";
 import { ethers, ContractReceipt } from "ethers";
 
-import { Notice, Report, Voucher } from "../src/generated/graphql";
 import { InputBox__factory } from "@cartesi/rollups";
 import { DEFAULT_INPUT_BOX_ADDRESS } from "../src/shared/default";
 import { provider, dappAddress, testTimeout } from "./conf";
@@ -18,14 +17,8 @@ interface InputTest {
   reports?:Array<Payload>
 }
 
-interface OutputTest {
-  notices: Array<Notice>,
-  reports: Array<Report>,
-  vouchers: Array<Voucher>
-}
-
 let input:InputTest;
-let output:OutputTest|ContractReceipt;
+let output:AdvanceOutput|ContractReceipt;
 const signer = ethers.Wallet
     .fromMnemonic("test test test test test test test test test test test junk",
     `m/44'/60'/0'/0/1`)
@@ -35,7 +28,7 @@ const signer = ethers.Wallet
 
 
 
-function expectedAsyncInput(input:InputTest, output:OutputTest) {
+function expectedAsyncInput(input:InputTest, output:AdvanceOutput) {
   if (input.notices && input.notices.length > 0) expect(input.notices.length).toBe(output.notices.length);
   for (let i = 0; i < output.notices.length; i++) {
     expect(output.notices[i].payload).toBe(

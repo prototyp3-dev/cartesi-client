@@ -8,16 +8,18 @@
 // under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
-"use client"
-import { createClient, fetchExchange } from "@urql/core";
-import { retryExchange } from '@urql/exchange-retry';
-import fetch from "cross-fetch";
+import request from "graphql-request";
 import {
     ReportsDocument,
     ReportsByInputDocument,
     Report,
     Input,
     ReportDocument,
+    ReportsByInputQueryVariables,
+    ReportsByInputQuery,
+    ReportsQuery,
+    ReportQueryVariables,
+    ReportQuery,
 } from "@/generated/graphql";
 
 import { GraphqlOptions, setDefaultGraphqlOptions, getGraphqlUrl } from "./lib"
@@ -44,9 +46,6 @@ export const getReports = async (
     url: string,
     inputIndex?: number
 ): Promise<PartialReport[]> => {
-    // create GraphQL client to reader server
-    const client = createClient({ url, exchanges: [fetchExchange], fetch });
-
     // query the GraphQL server for reports corresponding to the input index
     console.log(
         `querying ${url} for reports of input index "${inputIndex}"...`
@@ -54,11 +53,9 @@ export const getReports = async (
 
     if (inputIndex !== undefined) {
         // list reports querying by input
-        const { data, error } = await client
-            .query(ReportsByInputDocument, {
-                inputIndex: inputIndex,
-            })
-            .toPromise();
+        const variables:ReportsByInputQueryVariables = {inputIndex: inputIndex};
+        const data:ReportsByInputQuery = await request(url, ReportsByInputDocument, variables);
+        
         if (data?.input?.reports?.edges) {
             return data.input.reports.edges
                 .filter(isPartialReportEdge)
@@ -68,9 +65,8 @@ export const getReports = async (
         }
     } else {
         // list reports using top-level query
-        const { data, error } = await client
-            .query(ReportsDocument, {})
-            .toPromise();
+        const data:ReportsQuery = await request(url, ReportsDocument);
+
         if (data?.reports) {
             return data.reports.edges
                 .filter(isPartialReportEdge)
@@ -93,28 +89,18 @@ export const getReport = async (
     inputIndex: number,
     reportIndex = 0
 ): Promise<Report> => {
-    // create GraphQL client to reader server
-    const client = createClient({ url, exchanges: [retryExchange({
-        initialDelayMs: 2000, // 2 seconds
-        maxNumberAttempts: 3,
-        retryIf: error => { // retry if has a graphql error (ex: report not found for this inputIndex)
-            console.log("Checking error then retrying...")
-            return !!(error.graphQLErrors.length > 0);
-        }}), fetchExchange], fetch });
-
     // query the GraphQL server for the report
     console.log(
         `querying ${url} for report with index "${reportIndex}" from input "${inputIndex}"...`
     );
 
-    const { data, error } = await client
-        .query(ReportDocument, { reportIndex, inputIndex })
-        .toPromise();
+    const variables:ReportQueryVariables = {inputIndex: inputIndex, reportIndex: reportIndex};
+    const data:ReportQuery = await request(url, ReportDocument, variables);
 
     if (data?.report) {
         return data.report as Report;
     } else {
-        throw new Error(error?.message);
+        throw new Error("Unable to find report.");
     }
 };
 

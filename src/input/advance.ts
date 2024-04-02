@@ -9,6 +9,7 @@ import {
     DEFAULT_DAPP_RELAY_ADDRESS } from "@/shared/default";
 import { InputBox__factory, ERC20Portal__factory, ERC721Portal__factory, IERC20__factory, IERC721__factory, EtherPortal__factory, DAppAddressRelay__factory } from "@cartesi/rollups";
 import { Signer, utils, ContractReceipt, BigNumber, ethers } from "ethers";
+import { PartialNotice, PartialReport, PartialVoucher } from "..";
 
 interface AdvanceOptions {
     sync?: boolean;
@@ -39,9 +40,9 @@ export interface DappRelayOptions extends AdvanceOptions {
 }
 
 export interface AdvanceOutput {
-    notices: Array<Notice>,
-    reports: Array<Report>,
-    vouchers: Array<Voucher>
+    notices: Array<PartialNotice>,
+    reports: Array<PartialReport>,
+    vouchers: Array<PartialVoucher>
 }
 
 const DEFAULT_SYNC_BEHAVIOR = true;
