@@ -8,16 +8,18 @@
 // under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the
 // specific language governing permissions and limitations under the License.
-"use client"
-import { createClient, fetchExchange } from "@urql/core";
-import { retryExchange } from '@urql/exchange-retry';
-import fetch from "cross-fetch";
+import request from "graphql-request";
 import {
     NoticesDocument,
     NoticesByInputDocument,
     Notice,
     Input,
     NoticeDocument,
+    NoticesByInputQueryVariables,
+    NoticesByInputQuery,
+    NoticesQuery,
+    NoticeQuery,
+    NoticeQueryVariables,
 } from "@/generated/graphql";
 
 import { GraphqlOptions, setDefaultGraphqlOptions, getGraphqlUrl } from "./lib"
@@ -44,9 +46,6 @@ export const getNotices = async (
     url: string,
     inputIndex?: number
 ): Promise<PartialNotice[]> => {
-    // create GraphQL client to reader server
-    const client = createClient({ url, exchanges: [fetchExchange], fetch });
-
     // query the GraphQL server for notices corresponding to the input index
     console.log(
         `querying ${url} for notices of input index "${inputIndex}"...`
@@ -54,11 +53,9 @@ export const getNotices = async (
 
     if (inputIndex !== undefined) {
         // list notices querying by input
-        const { data, error } = await client
-            .query(NoticesByInputDocument, {
-                inputIndex: inputIndex,
-            })
-            .toPromise();
+        const variables:NoticesByInputQueryVariables = {inputIndex: inputIndex}
+        const data:NoticesByInputQuery = await request(url, NoticesByInputDocument, variables)
+
         if (data?.input?.notices?.edges) {
             return data.input.notices.edges
                 .filter(isPartialNoticeEdge)
@@ -68,9 +65,8 @@ export const getNotices = async (
         }
     } else {
         // list notices using top-level query
-        const { data, error } = await client
-            .query(NoticesDocument, {})
-            .toPromise();
+        const data:NoticesQuery = await request(url, NoticesDocument)
+
         if (data?.notices?.edges) {
             return data.notices.edges
                 .filter(isPartialNoticeEdge)
@@ -93,28 +89,18 @@ export const getNotice = async (
     inputIndex: number,
     noticeIndex = 0
 ): Promise<Notice> => {
-    // create GraphQL client to reader server
-    const client = createClient({ url, exchanges: [retryExchange({
-        initialDelayMs: 2000, // 2 seconds
-        maxNumberAttempts: 3,
-        retryIf: error => { // retry if has a graphql error (ex: notice not found for this inputIndex)
-            console.log("Checking error then retrying...")
-            return !!(error.graphQLErrors.length > 0);
-        }}), fetchExchange], fetch });
-
     // query the GraphQL server for the notice
     console.log(
         `querying ${url} for notice with index "${noticeIndex}" from input "${inputIndex}"...`
     );
 
-    const { data, error } = await client
-        .query(NoticeDocument, { noticeIndex, inputIndex })
-        .toPromise();
+    const variables:NoticeQueryVariables = {inputIndex: inputIndex, noticeIndex: noticeIndex};
+    const data:NoticeQuery = await request(url, NoticeDocument, variables);
 
     if (data?.notice) {
         return data.notice as Notice;
     } else {
-        throw new Error(error?.message);
+        throw new Error("Notice not found.");
     }
 };
 

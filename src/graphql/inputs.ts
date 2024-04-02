@@ -1,19 +1,22 @@
-"use client"
-import { createClient, fetchExchange } from "@urql/core";
-import { retryExchange } from '@urql/exchange-retry';
-import fetch from "cross-fetch";
+import { GraphQLClient, request } from 'graphql-request'
 import {
     Notice,
     GetInputResultDocument,
     Report,
     Voucher,
     GetInputResultQuery,
+    GetInputResultQueryVariables,
     CompletionStatus,
     Input,
-    GetInputDocument
+    GetInputDocument,
+    GetInputQuery,
+    GetInputQueryVariables
 } from "@/generated/graphql";
 
-import { GraphqlOptions, setDefaultGraphqlOptions, getGraphqlUrl } from "./lib"
+import { GraphqlOptions, setDefaultGraphqlOptions, getGraphqlUrl, isInputNotFound } from "./lib"
+import { PartialNotice } from "./notices";
+import { PartialReport } from "./reports";
+import { PartialVoucher } from "./vouchers";
 
 const DEFAULT_INITIAL_DELAY = 3000; // 3 seconds
 const DEFAULT_DELAY_INTERVAL = 1000;
@@ -42,31 +45,33 @@ const setDefaultInputResultOptions = (options: InputResult): InputResult => {
  */
 export const getInputResult = async (
     options: InputResult
-): Promise<{notices: Array<Notice>, reports: Array<Report>, vouchers: Array<Voucher>}> => {
+): Promise<{notices: Array<PartialNotice>, reports: Array<PartialReport>, vouchers: Array<PartialVoucher>}> => {
     if (options.inputIndex == undefined)
         throw new Error("Missing input index");
     options = setDefaultInputResultOptions(options);
-    let result = {notices: [] as Array<Notice>, reports: [] as Array<Report>, vouchers: [] as Array<Voucher>}
+    let result = {notices: [] as Array<PartialNotice>, reports: [] as Array<PartialReport>, vouchers: [] as Array<PartialVoucher>}
 
+    const variables:GetInputResultQueryVariables = {inputIndex: options.inputIndex};
+    const client = new GraphQLClient(getGraphqlUrl(options))
+    let data:GetInputResultQuery;
     while (result.notices.length == 0 && result.reports.length == 0 && result.vouchers.length == 0) {
-        // create GraphQL client to reader server
-        const client = createClient({ url:getGraphqlUrl(options), exchanges: [retryExchange({
-            initialDelayMs: options.initialDelay,
-            maxNumberAttempts: Number.POSITIVE_INFINITY,
-            retryIf: error => { // retry if has a graphql error (ex: notice not found for this inputIndex)
-                console.log("Checking error then retrying...")
-                return !!(error.graphQLErrors.length > 0);
-            }}), fetchExchange], fetch });
-
+        try {
+            data = await client.request(GetInputResultDocument, variables);
+        } catch(error) {
+            if (!isInputNotFound(error as Error)) {
+                console.log((error as Error).message);
+                return;
+            }
+            
+            // sleep then continue
+            await sleep(options.delayInterval);
+            continue;
+        }
+        
         // query the GraphQL server for the reports and notices
         console.log(
-            `querying ${getGraphqlUrl(options)} for notices and reports for input with index "${options.inputIndex}"...`
+            `querying ${getGraphqlUrl(options)} for notices, reports, and vouchers for input with index "${options.inputIndex}"...`
         );
-
-        const { data, error } = await client
-            .query(GetInputResultDocument, { inputIndex: options.inputIndex })
-            .toPromise();
-
 
         if (data?.input) {
             if (data.input.status != CompletionStatus.Unprocessed){
@@ -92,7 +97,7 @@ export const getInputResult = async (
                 }
             }
         } else {
-            throw new Error(error?.message);
+            throw new Error(`Unable to get Reports, Notices, and Vouchers for input ${options.inputIndex}!`);
         }
         await sleep(options.delayInterval);
     }
@@ -111,7 +116,7 @@ const sleep = (ms: number): Promise<void> => {
  */
 export const queryInputResult = async (
     options?: InputResult
-): Promise<{notices: Array<Notice>, reports: Array<Report>, vouchers: Array<Voucher>}> => {
+): Promise<{notices: Array<PartialNotice>, reports: Array<PartialReport>, vouchers: Array<PartialVoucher>}> => {
     if (options.outputIndex === undefined) {
         throw new Error("input index not defined");
     }
@@ -129,28 +134,18 @@ export const getInput = async (
     url: string,
     inputIndex: number
 ): Promise<Input> => {
-    // create GraphQL client to reader server
-    const client = createClient({ url, exchanges: [retryExchange({
-        initialDelayMs: 2000, // 2 seconds
-        maxNumberAttempts: 3,
-        retryIf: error => { // retry if has a graphql error (ex: notice not found for this inputIndex)
-            console.log("Checking error then retrying...")
-            return !!(error.graphQLErrors.length > 0);
-        }}), fetchExchange], fetch });
-
     // query the GraphQL server for the input
     console.log(
         `querying ${url} for input with index "${inputIndex}"...`
     );
 
-    const { data, error } = await client
-        .query(GetInputDocument, { inputIndex })
-        .toPromise();
+    const variables:GetInputQueryVariables = {inputIndex: inputIndex};
+    const data:GetInputQuery = await request(url, GetInputDocument, variables);
 
     if (data?.input) {
         return data.input as Input;
     } else {
-        throw new Error(error?.message);
+        throw new Error(`Unable to get Input with index ${inputIndex}!`);
     }
 };
 
