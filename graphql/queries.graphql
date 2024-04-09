@@ -233,6 +233,7 @@ query getInputResult($inputIndex: Int!) {
 
 query getInput($inputIndex: Int!) {
   input(index: $inputIndex) {
+    index
     status
     timestamp
     msgSender
