@@ -206,7 +206,7 @@ export async function advanceERC20Deposit(
     if (!options.sync) return receipt;
 
     // call is sync, fetch input processing result (reports, notices, and vouchers)
-    const inputIndex = Number(receipt.events[2].topics[2]);
+    const inputIndex = Number(receipt.events[1].topics[2]);
     const inputResultOptions: InputResult = options as InputResult;
     inputResultOptions.inputIndex = inputIndex;
     return await getInputResult(inputResultOptions);
